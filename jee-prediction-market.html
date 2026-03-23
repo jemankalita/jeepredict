@@ -792,38 +792,48 @@ sb.auth.onAuthStateChange(async(event,session)=>{
   console.log('Auth event:', event, session?.user?.email);
   currentUser=session?.user||null;
 
-  if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
-    if(currentUser){
-      // Close modal if open
-      const overlay=document.getElementById('auth-overlay');
-      if(overlay?.classList.contains('open')) closeAuth();
+  if(currentUser){
+    // Close modal if open
+    const overlay=document.getElementById('auth-overlay');
+    if(overlay?.classList.contains('open')) closeAuth();
 
-      // Load or create profile
-      await loadUserProfile();
-      if(!userProfile){
-        // Profile missing — create it now
-        const uname=currentUser.user_metadata?.username||currentUser.email.split('@')[0];
-        const{error}=await sb.from('profiles').upsert({
-          id:currentUser.id,
-          email:currentUser.email,
-          username:uname,
-          reddium_balance:1000
-        },{onConflict:'id'});
-        console.log('Profile created:', uname, error?.message);
-        await loadUserProfile();
-      }
-      await loadUserBets();
-      subscribeRealtime();
+    // Always update UI immediately so header shows something
+    updateAuthUI();
+
+    // Load profile
+    const{data:prof}=await sb.from('profiles')
+      .select('*').eq('id',currentUser.id).single();
+
+    if(prof){
+      userProfile=prof;
+      console.log('Profile loaded:', prof.username, prof.reddium_balance);
+    } else {
+      // Create profile if missing
+      const uname=currentUser.user_metadata?.username||currentUser.email.split('@')[0];
+      await sb.from('profiles').upsert({
+        id:currentUser.id,
+        email:currentUser.email,
+        username:uname,
+        reddium_balance:1000
+      },{onConflict:'id'});
+      const{data:prof2}=await sb.from('profiles')
+        .select('*').eq('id',currentUser.id).single();
+      userProfile=prof2;
+      console.log('Profile created:', uname);
     }
-  }
 
-  if(event==='SIGNED_OUT'){
+    await loadUserBets();
+    subscribeRealtime();
+    updateAuthUI();
+    renderMarkets();
+    updateKPIs();
+
+  } else {
     userProfile=null;userBets=[];
     if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null}
+    updateAuthUI();
+    renderPositions();
   }
-
-  updateAuthUI();
-  renderPositions();
 });
 
 (async()=>{
