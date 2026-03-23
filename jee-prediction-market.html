@@ -503,15 +503,8 @@ async function signOut(){
 
 async function handleSignOut(){
   console.log('Sign out clicked');
-  const btn=document.getElementById('logout-btn');
-  if(btn){btn.textContent='...';btn.disabled=true;}
   await sb.auth.signOut();
-  currentUser=null;userProfile=null;userBets=[];
-  if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null;}
-  updateAuthUI();
-  renderPositions();
-  renderMarkets();
-  toast('Signed out','ok');
+  // onAuthStateChange will handle the rest
 }
 
 function togglePass(inputId,btn){
@@ -809,48 +802,65 @@ function toast(msg,type='ok'){
 // ── INIT ──────────────────────────────────────────────
 sb.auth.onAuthStateChange(async(event,session)=>{
   console.log('Auth event:', event, session?.user?.email);
-  currentUser=session?.user||null;
+  currentUser = session?.user || null;
 
   if(currentUser){
-    // Close modal if open
-    const overlay=document.getElementById('auth-overlay');
-    if(overlay?.classList.contains('open')) closeAuth();
+    // Close modal
+    document.getElementById('auth-overlay')?.classList.remove('open');
 
-    // Always update UI immediately so header shows something
-    updateAuthUI();
+    // Show logged-in state immediately
+    document.getElementById('auth-buttons').style.display='none';
+    document.getElementById('logout-btn').style.display='block';
+    document.getElementById('balance-pill').style.display='flex';
+    document.getElementById('bp-label').textContent =
+      currentUser.user_metadata?.username ||
+      currentUser.email.split('@')[0];
 
-    // Load profile
-    const{data:prof}=await sb.from('profiles')
-      .select('*').eq('id',currentUser.id).single();
+    // Fetch profile
+    const {data, error} = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
 
-    if(prof){
-      userProfile=prof;
-      console.log('Profile loaded:', prof.username, prof.reddium_balance);
+    console.log('Profile fetch:', data, error?.message);
+
+    if(data){
+      userProfile = data;
+      document.getElementById('hdr-bal').textContent = fmt(data.reddium_balance);
+      document.getElementById('bp-label').textContent = data.username || data.email.split('@')[0];
+      document.getElementById('kpi-bal').innerHTML = fmt(data.reddium_balance)+'<span class="unit">R</span>';
     } else {
-      // Create profile if missing
-      const uname=currentUser.user_metadata?.username||currentUser.email.split('@')[0];
-      await sb.from('profiles').upsert({
-        id:currentUser.id,
-        email:currentUser.email,
-        username:uname,
-        reddium_balance:1000
-      },{onConflict:'id'});
-      const{data:prof2}=await sb.from('profiles')
-        .select('*').eq('id',currentUser.id).single();
-      userProfile=prof2;
-      console.log('Profile created:', uname);
+      // Create missing profile
+      const uname = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
+      const {data:newP} = await sb.from('profiles').upsert({
+        id: currentUser.id,
+        email: currentUser.email,
+        username: uname,
+        reddium_balance: 1000
+      },{onConflict:'id'}).select().single();
+      if(newP){
+        userProfile = newP;
+        document.getElementById('hdr-bal').textContent = fmt(newP.reddium_balance);
+        document.getElementById('bp-label').textContent = newP.username;
+        document.getElementById('kpi-bal').innerHTML = fmt(newP.reddium_balance)+'<span class="unit">R</span>';
+      }
     }
 
     await loadUserBets();
     subscribeRealtime();
-    updateAuthUI();
-    renderMarkets();
     updateKPIs();
 
   } else {
-    userProfile=null;userBets=[];
-    if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null}
-    updateAuthUI();
+    // Logged out state
+    userProfile = null; userBets = [];
+    if(realtimeSub){ sb.removeChannel(realtimeSub); realtimeSub=null; }
+
+    document.getElementById('auth-buttons').style.display='flex';
+    document.getElementById('logout-btn').style.display='none';
+    document.getElementById('balance-pill').style.display='none';
+    document.getElementById('kpi-bal').innerHTML='—';
+
     renderPositions();
   }
 });
