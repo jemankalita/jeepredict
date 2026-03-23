@@ -484,74 +484,55 @@ async function submitAuth(){
 
   const email = fakeEmail(username);
 
-  // Add a timeout safety so button never stays stuck
-  const timeout = setTimeout(()=>{
-    btn.disabled=false;
-    btn.textContent=authMode==='signup'?'Sign Up':'Sign In';
-    errEl.textContent='Request timed out. Please try again.';
-  }, 10000);
+  btn.disabled=true;
+  btn.textContent=authMode==='signup'?'Creating...':'Signing in...';
 
-  try {
-    if(authMode==='signup'){
-      const{data,error}=await sb.auth.signUp({
+  if(authMode==='signup'){
+
+    const{data,error}=await sb.auth.signUp({
+      email,
+      password:pass,
+      options:{data:{username}}
+    });
+
+    btn.disabled=false;
+    btn.textContent='Sign Up';
+
+    if(error){
+      errEl.textContent=error.message.toLowerCase().includes('already')
+        ?'Username taken. Try signing in.'
+        :error.message;
+      return;
+    }
+
+    // Upsert profile — belt and braces alongside the trigger
+    if(data?.user){
+      sb.from('profiles').upsert({
+        id:data.user.id,
         email,
-        password: pass,
-        options:{ data:{ username } }
-      });
-
-      clearTimeout(timeout);
-      btn.disabled=false; btn.textContent='Sign Up';
-
-      if(error){
-        // User already exists — tell them to sign in
-        if(error.message.toLowerCase().includes('already registered')){
-          errEl.textContent='Username already taken. Try signing in instead.';
-        } else {
-          errEl.textContent=error.message;
-        }
-        return;
-      }
-
-      // Upsert profile manually — don't rely solely on trigger
-      if(data?.user){
-        await sb.from('profiles').upsert({
-          id: data.user.id,
-          email,
-          username,
-          reddium_balance: 1000
-        },{onConflict:'id'});
-      }
-
-      closeAuth();
-      toast('Welcome to JEEPredict! 1,000 Reddium credited.','ok');
-
-    } else {
-      // Sign in
-      const{data,error}=await sb.auth.signInWithPassword({ email, password:pass });
-
-      clearTimeout(timeout);
-      btn.disabled=false; btn.textContent='Sign In';
-
-      if(error){
-        errEl.textContent='Incorrect username or password.';
-        return;
-      }
-
-      // Close modal and show welcome — onAuthStateChange handles the rest
-      closeAuth();
-      toast('Welcome back!','ok');
+        username,
+        reddium_balance:1000
+      },{onConflict:'id'}).then(()=>{});
     }
-  } catch(e){
-    clearTimeout(timeout);
+
+    closeAuth();
+    toast('Welcome to JEEPredict! 1,000 Reddium credited.','ok');
+
+  } else {
+
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+
     btn.disabled=false;
-    btn.textContent=authMode==='signup'?'Sign Up':'Sign In';
-    // Only show error if we're not already signed in
-    if(!currentUser){
-      errEl.textContent='Something went wrong. Please try again.';
-    } else {
-      closeAuth();
+    btn.textContent='Sign In';
+
+    if(error){
+      errEl.textContent='Incorrect username or password.';
+      return;
     }
-    console.error(e);
+
+    closeAuth();
+    toast('Welcome back!','ok');
+
   }
 }
 
