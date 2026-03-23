@@ -474,7 +474,7 @@ async function submitAuth(){
   const email=fakeEmail(username);
 
   if(authMode==='signup'){
-    const r=await sb.auth.signUp({email,password:pass,options:{data:{username}}});
+    const r=await sb.auth.signUp({email,password:pass,options:{data:{username},emailRedirectTo:window.location.href}});
     btn.disabled=false; btn.textContent='Sign Up';
     if(r.error){
       errEl.textContent=r.error.message.includes('already')?'Username taken — try signing in.':r.error.message;
@@ -789,36 +789,41 @@ function toast(msg,type='ok'){
 
 // ── INIT ──────────────────────────────────────────────
 sb.auth.onAuthStateChange(async(event,session)=>{
+  console.log('Auth event:', event, session?.user?.email);
   currentUser=session?.user||null;
-  if(currentUser){
-    // Auto-close auth modal if open
-    const overlay=document.getElementById('auth-overlay');
-    if(overlay.classList.contains('open')) closeAuth();
-    // Retry profile load up to 5 times — trigger may have a slight delay
-    let tries=0;
-    while(tries<5){
+
+  if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
+    if(currentUser){
+      // Close modal if open
+      const overlay=document.getElementById('auth-overlay');
+      if(overlay?.classList.contains('open')) closeAuth();
+
+      // Load or create profile
       await loadUserProfile();
-      if(userProfile) break;
-      await new Promise(r=>setTimeout(r,600));
-      tries++;
+      if(!userProfile){
+        // Profile missing — create it now
+        const uname=currentUser.user_metadata?.username||currentUser.email.split('@')[0];
+        const{error}=await sb.from('profiles').upsert({
+          id:currentUser.id,
+          email:currentUser.email,
+          username:uname,
+          reddium_balance:1000
+        },{onConflict:'id'});
+        console.log('Profile created:', uname, error?.message);
+        await loadUserProfile();
+      }
+      await loadUserBets();
+      subscribeRealtime();
     }
-    // If profile still missing, create it manually
-    if(!userProfile){
-      await sb.from('profiles').upsert({
-        id:currentUser.id,
-        email:currentUser.email,
-        username:currentUser.user_metadata?.username || currentUser.email.split('@')[0],
-        reddium_balance:1000
-      });
-      await loadUserProfile();
-    }
-    await loadUserBets();
-    subscribeRealtime();
-  } else {
+  }
+
+  if(event==='SIGNED_OUT'){
     userProfile=null;userBets=[];
     if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null}
   }
-  updateAuthUI();renderPositions();
+
+  updateAuthUI();
+  renderPositions();
 });
 
 (async()=>{
