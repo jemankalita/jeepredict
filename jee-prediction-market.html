@@ -202,6 +202,11 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 .spinner{width:20px;height:20px;border:2px solid var(--rim2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-state{padding:48px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.pass-input{flex:1;padding-right:40px!important}
+.eye-btn{position:absolute;right:12px;background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center;transition:color .2s}
+.eye-btn:hover{color:var(--text2)}
+.eye-icon{display:block}
 
 
 
@@ -322,13 +327,23 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
     <!-- Password -->
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input class="form-input" id="auth-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()" autocomplete="current-password">
+      <div class="pass-wrap">
+        <input class="form-input pass-input" id="auth-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()" autocomplete="current-password">
+        <button type="button" class="eye-btn" onclick="togglePass('auth-password',this)" tabindex="-1">
+          <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Confirm password — signup only -->
     <div class="form-group field-confirm" id="field-confirm" style="display:none">
       <label class="form-label">Confirm Password</label>
-      <input class="form-input" id="auth-confirm" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()">
+      <div class="pass-wrap">
+        <input class="form-input pass-input" id="auth-confirm" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()">
+        <button type="button" class="eye-btn" onclick="togglePass('auth-confirm',this)" tabindex="-1">
+          <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </div>
 
     <div class="form-error" id="auth-error"></div>
@@ -522,6 +537,7 @@ async function submitAuth(){
         return;
       }
 
+      // Close modal and show welcome — onAuthStateChange handles the rest
       closeAuth();
       toast('Welcome back!','ok');
     }
@@ -529,7 +545,12 @@ async function submitAuth(){
     clearTimeout(timeout);
     btn.disabled=false;
     btn.textContent=authMode==='signup'?'Sign Up':'Sign In';
-    errEl.textContent='Something went wrong. Please try again.';
+    // Only show error if we're not already signed in
+    if(!currentUser){
+      errEl.textContent='Something went wrong. Please try again.';
+    } else {
+      closeAuth();
+    }
     console.error(e);
   }
 }
@@ -539,6 +560,16 @@ async function signOut(){
   currentUser=null; userProfile=null; userBets=[];
   updateAuthUI(); renderPositions();
   toast('Signed out','ok');
+}
+
+function togglePass(inputId, btn){
+  const inp=document.getElementById(inputId);
+  const isPass=inp.type==='password';
+  inp.type=isPass?'text':'password';
+  btn.querySelector('svg').innerHTML=isPass
+    ?'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    :'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  btn.style.color=isPass?'var(--gold)':'var(--text3)';
 }
 
 // ── DATA ──────────────────────────────────────────────
@@ -760,15 +791,22 @@ function updateAuthUI(){
   document.getElementById('logout-btn').style.display=in_?'block':'none';
   document.getElementById('balance-pill').style.display=in_?'flex':'none';
   const bal=userProfile?.reddium_balance;
-  const uname=userProfile?.username||currentUser?.user_metadata?.username||'';
+  const uname=userProfile?.username
+    || currentUser?.user_metadata?.username
+    || currentUser?.email?.split('@')[0]
+    || '';
+  // Always update label with username
+  const labelEl=document.getElementById('bp-label');
+  if(labelEl) labelEl.textContent=uname||'Reddium';
   if(bal!=null){
-    // Show username + balance in header
     document.getElementById('hdr-bal').textContent=fmt(bal);
-    document.getElementById('bp-label').textContent=uname||'Reddium';
     document.getElementById('kpi-bal').innerHTML=fmt(bal)+'<span class="unit">R</span>';
+  } else if(in_){
+    document.getElementById('hdr-bal').textContent='...';
+    document.getElementById('kpi-bal').innerHTML='...<span class="unit">R</span>';
   } else {
-    document.getElementById('kpi-bal').innerHTML=in_?'...<span class="unit">R</span>':'—';
-    if(uname) document.getElementById('bp-label').textContent=uname;
+    document.getElementById('hdr-bal').textContent='—';
+    document.getElementById('kpi-bal').innerHTML='—';
   }
 }
 
@@ -814,6 +852,9 @@ function toast(msg,type='ok'){
 sb.auth.onAuthStateChange(async(event,session)=>{
   currentUser=session?.user||null;
   if(currentUser){
+    // Auto-close auth modal if open
+    const overlay=document.getElementById('auth-overlay');
+    if(overlay.classList.contains('open')) closeAuth();
     // Retry profile load up to 5 times — trigger may have a slight delay
     let tries=0;
     while(tries<5){
