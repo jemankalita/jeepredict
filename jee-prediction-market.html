@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEEPredict — Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:    #06080D;
+  --base:   #090C13;
+  --raised: #0E1520;
+  --float:  #131B27;
+  --lift:   #182030;
+  --rim:    rgba(255,255,255,0.08);
+  --rim2:   rgba(255,255,255,0.14);
+  --rim3:   rgba(255,255,255,0.16);
+  --gold:   #C9A96E;
+  --gold2:  #DFC080;
+  --gold-d: rgba(201,169,110,0.08);
+  --gold-m: rgba(201,169,110,0.15);
+  --em:     #2EBD7E;
+  --em-d:   rgba(46,189,126,0.08);
+  --ruby:   #C94040;
+  --ruby-d: rgba(201,64,64,0.08);
+  --amber:  #D48A30;
+  --amber-d:rgba(212,138,48,0.08);
+  --cobalt: #4A8FD4;
+  --cobalt-d:rgba(74,143,212,0.08);
+  --violet: #9F72D8;
+  --violet-d:rgba(159,114,216,0.08);
+  --text:   #EDE8DF;
+  --text2:  #9BAFC4;
+  --text3:  #5A7080;
+  --sans:   'DM Sans', sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+  --serif:  'Cormorant Garamond', serif;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--base);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+img.e{display:inline-block;vertical-align:-0.18em;height:1em;width:auto}
+img.e-lg{height:1.3em}
+img.e-xl{height:1.8em}
+
+/* ── HEADER ── */
+header{
+  position:sticky;top:0;z-index:200;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+  background:rgba(6,8,13,0.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--rim);
+}
+
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{
+  width:28px;height:28px;
+  background:linear-gradient(145deg,#C9A96E,#8A6030);
+  border-radius:6px;
+  display:grid;place-items:center;
+  font-family:var(--serif);
+  font-size:15px;font-weight:600;
+  color:var(--ink);
+  letter-spacing:-0.5px;
+}
+.logo-name{
+  font-family:var(--sans);
+  font-size:15px;font-weight:600;
+  color:var(--text);
+  letter-spacing:0.2px;
+}
+.logo-name em{font-style:normal;color:var(--gold)}
+
+.header-mid{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);
+  font-size:10px;color:var(--text2);
+  letter-spacing:2px;text-transform:uppercase;
+}
+.hm-dot{width:5px;height:5px;border-radius:50%;background:var(--em);box-shadow:0 0 6px var(--em)}
+
+.header-right{display:flex;align-items:center;gap:10px}
+.balance-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--raised);
+  border:1px solid var(--rim2);
+  border-radius:8px;
+  padding:6px 14px;
+  cursor:default;
+  transition:border-color .2s;
+}
+.balance-pill:hover{border-color:var(--rim3)}
+.bp-label{font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px}
+.bp-value{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--gold);letter-spacing:-0.3px}
+
+/* ── PARI BANNER ── */
+.pari-bar{
+  background:var(--ink);
+  border-bottom:1px solid var(--rim);
+  padding:8px 32px;
+  display:flex;align-items:center;gap:20px;
+  position:relative;z-index:1;
+}
+.pari-tag{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);white-space:nowrap;
+  display:flex;align-items:center;gap:8px;
+}
+.pari-tag::before{content:'';width:16px;height:1px;background:var(--gold)}
+.pari-text{
+  font-family:var(--mono);font-size:10px;
+  color:var(--text2);flex:1;letter-spacing:0.3px;
+}
+.pari-text b{color:var(--text);font-weight:400}
+
+/* ── TICKER ── */
+.ticker{
+  background:var(--ink);
+  border-bottom:1px solid var(--rim);
+  padding:8px 0;overflow:hidden;
+}
+.ticker-rail{
+  display:flex;gap:0;
+  animation:rail 50s linear infinite;
+  width:max-content;
+}
+.t-item{
+  display:flex;align-items:center;gap:0;
+  padding:0 28px;
+  border-right:1px solid var(--rim);
+  font-family:var(--mono);font-size:10px;
+  white-space:nowrap;
+}
+.t-shift{color:var(--text2);font-weight:500;margin-right:8px}
+.t-val{color:var(--em)}
+.t-zero{color:var(--text2)}
+@keyframes rail{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── LAYOUT ── */
+.page{max-width:1320px;margin:0 auto;padding:28px 32px 80px}
+
+/* ── KPI ROW ── */
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--rim);
+  border:1px solid var(--rim);
+  border-radius:14px;
+  overflow:hidden;
+  margin-bottom:32px;
+}
+.kpi{
+  background:var(--raised);
+  padding:20px 24px;
+  position:relative;
+}
+.kpi-label{
+  font-family:var(--mono);font-size:9px;
+  text-transform:uppercase;letter-spacing:2px;
+  color:var(--text2);margin-bottom:10px;
+}
+.kpi-value{
+  font-family:var(--mono);font-size:26px;font-weight:600;
+  color:var(--text);letter-spacing:-1px;line-height:1;
+}
+.kpi-value .unit{font-size:14px;color:var(--gold);margin-left:3px;font-weight:400}
+.kpi-sub{font-family:var(--sans);font-size:11px;color:var(--text2);margin-top:5px}
+.kpi-accent{position:absolute;bottom:0;left:24px;right:24px;height:1px;background:var(--accent,var(--gold));opacity:0.4}
+
+/* ── EXPLAINER ── */
+.explainer{
+  background:var(--raised);
+  border:1px solid var(--rim);
+  border-radius:14px;
+  padding:24px 28px;
+  margin-bottom:32px;
+  display:grid;
+  grid-template-columns:200px 1px 1fr;
+  gap:28px;
+  align-items:start;
+}
+.exp-head{}
+.exp-eyebrow{
+  font-family:var(--mono);font-size:9px;
+  text-transform:uppercase;letter-spacing:2px;
+  color:var(--gold);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+  opacity:1;
+}
+.exp-eyebrow::before{content:'';width:12px;height:1px;background:var(--gold)}
+.exp-title{
+  font-family:var(--serif);font-size:22px;font-weight:500;
+  color:var(--text);line-height:1.2;
+  font-style:italic;
+}
+.exp-divider{background:var(--rim);width:1px}
+.exp-formulas{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+.formula{border-left:1px solid var(--rim2);padding-left:16px}
+.f-label{font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.f-eq{font-family:var(--mono);font-size:13px;color:var(--text);line-height:1.7}
+.f-eq .fv{color:var(--gold)}
+.f-eq .fr{color:var(--em)}
+.f-eq .fo{color:var(--text2)}
+.f-note{font-family:var(--sans);font-size:11px;color:var(--text2);margin-top:6px;font-style:italic}
+
+/* ── PAGE HEADING ── */
+.page-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:20px;
+}
+.page-title{
+  font-family:var(--serif);
+  font-size:32px;font-weight:500;
+  color:var(--text);letter-spacing:-0.5px;
+  font-style:italic;
+}
+.page-sub{
+  font-family:var(--mono);font-size:10px;
+  color:var(--text2);letter-spacing:1.5px;text-transform:uppercase;
+}
+
+/* ── MARKETS GRID ── */
+.markets-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+
+/* ── MARKET CARD ── */
+.mcard{
+  background:var(--raised);
+  border:1px solid var(--rim);
+  border-radius:14px;
+  overflow:hidden;
+  transition:border-color .25s,box-shadow .25s;
+}
+.mcard:hover{
+  border-color:var(--rim2);
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+}
+
+.mcard-head{
+  padding:18px 22px 14px;
+  border-bottom:1px solid var(--rim);
+  display:flex;justify-content:space-between;align-items:flex-start;
+  background:var(--float);
+  position:relative;
+  overflow:hidden;
+}
+.mcard-head::after{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:1px;
+  background:var(--mc-color,var(--gold));
+  opacity:0.5;
+}
+.mcard-icon{
+  width:36px;height:36px;
+  border-radius:9px;
+  background:var(--mc-dim,var(--gold-d));
+  border:1px solid rgba(255,255,255,0.06);
+  display:grid;place-items:center;
+  margin-bottom:10px;
+}
+.mcard-name{
+  font-family:var(--sans);font-size:14px;font-weight:600;
+  color:var(--text);margin-bottom:3px;
+}
+.mcard-desc{font-family:var(--sans);font-size:12px;color:var(--text2);font-weight:400;line-height:1.55}
+
+.mcard-meta{text-align:right;flex-shrink:0}
+.pool-label{font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.pool-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--gold)}
+.open-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:9px;
+  color:var(--em);letter-spacing:1px;
+  text-transform:uppercase;margin-top:8px;
+}
+.open-badge::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--em);
+  box-shadow:0 0 6px var(--em);
+  animation:breathe 2s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── OPTIONS ── */
+.mcard-body{padding:14px 22px 18px}
+
+.opts-col-heads{
+  display:grid;
+  grid-template-columns:40px 1fr 54px 62px 56px;
+  gap:8px;padding:0 10px 8px;
+  font-family:var(--mono);font-size:8px;
+  color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;
+}
+
+.opts-list{display:flex;flex-direction:column;gap:4px}
+
+.opt-row{
+  display:grid;
+  grid-template-columns:40px 1fr 54px 62px 56px;
+  align-items:center;gap:8px;
+  padding:9px 10px;
+  border-radius:8px;
+  border:1px solid transparent;
+  cursor:pointer;
+  transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.opt-row::before{
+  content:'';
+  position:absolute;left:0;top:0;bottom:0;
+  width:var(--fill,0%);
+  background:rgba(255,255,255,0.018);
+  transition:width .5s ease;
+}
+.opt-row:hover{
+  background:var(--float);
+  border-color:rgba(255,255,255,0.07);
+}
+.opt-row.sel{
+  background:var(--mc-dim,var(--gold-d));
+  border-color:var(--mc-color,var(--gold));
+}
+.opt-row.sel .o-name{color:var(--mc-color,var(--gold))}
+
+.o-name{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)}
+.bar-wrap{height:3px;background:var(--rim);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;background:var(--mc-color,var(--gold));transition:width .5s ease}
+.o-pct{font-family:var(--mono);font-size:10px;color:var(--text);text-align:right}
+.o-stk{font-family:var(--mono);font-size:10px;color:var(--gold);text-align:right}
+.o-odds{font-family:var(--mono);font-size:11px;font-weight:600;text-align:right;color:var(--mc-color,var(--gold))}
+.o-dim{color:var(--text2) !important;font-weight:400 !important}
+.o-first{color:var(--em) !important;font-size:9px !important;font-weight:400 !important}
+
+/* bet row */
+.bet-row{
+  display:flex;align-items:center;gap:8px;
+  margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--rim);
+}
+.sel-info{
+  flex:1;min-width:0;
+  font-family:var(--mono);font-size:10px;color:var(--text2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sel-info b{color:var(--mc-color,var(--gold));font-weight:500}
+
+.inp-wrap{
+  display:flex;align-items:center;
+  background:var(--ink);
+  border:1px solid var(--rim2);
+  border-radius:7px;padding:0 12px;gap:6px;
+  transition:border-color .2s;
+}
+.inp-wrap:focus-within{border-color:var(--mc-color,var(--gold))}
+.inp-icon{font-size:11px;flex-shrink:0}
+.bet-inp{
+  background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:12px;
+  color:var(--text);width:80px;padding:7px 0;
+}
+.bet-inp::placeholder{color:var(--text2)}
+
+.bet-btn{
+  padding:8px 18px;
+  border-radius:7px;border:none;
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  cursor:pointer;letter-spacing:0.5px;
+  transition:all .15s;white-space:nowrap;
+  background:var(--mc-color,var(--gold));
+  color:var(--ink);
+}
+.bet-btn:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+.bet-btn:active{transform:translateY(0)}
+.bet-btn:disabled{background:var(--float);color:var(--text3);cursor:not-allowed;transform:none;filter:none;box-shadow:none}
+
+.preview-line{
+  font-family:var(--mono);font-size:10px;
+  color:var(--text2);margin-top:6px;min-height:14px;
+  transition:color .2s;
+}
+.preview-line.on{color:var(--em);font-weight:400}
+
+/* ── 99 PCT CARD ── */
+.mcard.wide{grid-column:1/-1}
+.cutoff-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:6px;
+}
+.c-opt{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:12px 8px;border-radius:8px;
+  border:1px solid transparent;
+  background:var(--float);
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.c-opt:hover{border-color:rgba(255,255,255,0.08)}
+.c-opt.sel{
+  border-color:var(--violet);
+  background:var(--violet-d);
+}
+.c-range{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)}
+.c-bar{width:100%;height:2px;background:var(--rim);border-radius:1px;overflow:hidden}
+.c-bar-fill{height:100%;background:var(--violet);border-radius:1px;transition:width .5s}
+.c-pct{font-family:var(--mono);font-size:10px;color:var(--violet)}
+.c-stk{font-family:var(--mono);font-size:10px;color:var(--gold)}
+.c-odds{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--violet)}
+.c-none{color:var(--text2);font-weight:400;font-size:9px}
+
+/* ── PORTFOLIO ── */
+.portfolio{
+  background:var(--raised);
+  border:1px solid var(--rim);
+  border-radius:14px;
+  overflow:hidden;
+}
+.port-head{
+  padding:14px 22px;
+  border-bottom:1px solid var(--rim);
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--float);
+}
+.port-title{
+  font-family:var(--serif);font-size:18px;font-weight:500;
+  color:var(--text);font-style:italic;
+  display:flex;align-items:center;gap:10px;
+}
+.port-meta{font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px}
+
+.empty{
+  padding:48px;text-align:center;
+  font-family:var(--mono);font-size:11px;
+  color:var(--text2);line-height:2;
+  letter-spacing:0.3px;
+}
+
+.ptable{width:100%;border-collapse:collapse}
+.ptable thead tr{background:var(--ink)}
+.ptable th{
+  font-family:var(--mono);font-size:9px;
+  color:var(--text2);text-transform:uppercase;
+  letter-spacing:1.5px;padding:10px 22px;
+  text-align:left;font-weight:400;
+  border-bottom:1px solid var(--rim);
+}
+.ptable td{
+  padding:12px 22px;
+  font-family:var(--mono);font-size:11px;
+  border-bottom:1px solid var(--rim);
+  color:var(--text);transition:background .15s;
+}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:var(--float)}
+.td-mk{color:var(--text);font-weight:500;font-size:12px}
+.td-pick{
+  display:inline-block;
+  background:var(--float);border:1px solid var(--rim2);
+  border-radius:5px;padding:2px 9px;
+  color:var(--gold);font-size:10px;
+}
+.td-stk{color:var(--gold)}
+.td-win{color:var(--cobalt)}
+.status-tag{
+  display:inline-block;padding:2px 9px;border-radius:4px;
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  background:var(--amber-d);color:var(--amber);
+  border:1px solid rgba(212,138,48,0.3);
+}
+
+/* ── MODAL ── */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(8px);
+  z-index:500;display:none;
+  align-items:center;justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--raised);
+  border:1px solid var(--rim2);
+  border-radius:16px;padding:28px;
+  width:90%;max-width:380px;
+  animation:mIn .2s ease;
+}
+@keyframes mIn{from{transform:scale(0.94);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-eyebrow{
+  font-family:var(--mono);font-size:9px;
+  color:var(--gold);text-transform:uppercase;
+  letter-spacing:2px;margin-bottom:6px;
+}
+.modal-title{
+  font-family:var(--serif);font-size:28px;
+  font-weight:500;font-style:italic;
+  color:var(--text);margin-bottom:20px;
+}
+.mrow{
+  display:flex;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--rim);
+  font-family:var(--mono);font-size:11px;
+}
+.mrow:last-of-type{border:none}
+.mrow-label{color:var(--text2)}
+.mrow-val{color:var(--text);font-weight:500}
+.mrow-val.hl{color:var(--em)}
+.mwarn{
+  font-family:var(--sans);font-size:12px;font-weight:400;
+  color:var(--amber);line-height:1.6;
+  margin-top:12px;padding:10px 14px;
+  background:var(--amber-d);border-radius:7px;
+  border:1px solid rgba(212,138,48,0.15);
+}
+.modal-confirm{
+  width:100%;margin-top:16px;padding:13px;
+  border:none;border-radius:9px;
+  background:var(--gold);color:var(--ink);
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  cursor:pointer;letter-spacing:0.5px;
+  transition:all .15s;
+}
+.modal-confirm:hover{background:var(--gold2);transform:translateY(-1px)}
+.modal-cancel{
+  width:100%;margin-top:7px;padding:11px;
+  border:1px solid var(--rim2);border-radius:9px;
+  background:transparent;color:var(--text3);
+  font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:all .15s;
+}
+.modal-cancel:hover{border-color:var(--ruby);color:var(--ruby)}
+
+/* ── TOASTS ── */
+#toasts{
+  position:fixed;bottom:24px;right:24px;
+  display:flex;flex-direction:column;gap:8px;z-index:9000;
+}
+.toast{
+  background:var(--float);
+  border:1px solid var(--rim2);
+  border-radius:10px;
+  padding:12px 18px;
+  font-family:var(--mono);font-size:11px;
+  color:var(--text);
+  animation:tIn .25s ease, tOut .3s ease 2.7s forwards;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  max-width:320px;
+  display:flex;align-items:center;gap:10px;
+}
+.toast.ok{border-color:rgba(46,189,126,0.35)}
+.toast.err{border-color:rgba(201,64,64,0.35)}
+@keyframes tIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes tOut{to{transform:translateX(60px);opacity:0}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1000px){.markets-grid{grid-template-columns:1fr}.mcard.wide{grid-column:1}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){
+  header{padding:0 16px}
+  .page{padding:20px 16px 60px}
+  .explainer{grid-template-columns:1fr;gap:20px}
+  .exp-divider{display:none}
+  .exp-formulas{grid-template-columns:1fr}
+  .pari-bar{padding:8px 16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-mark">J</div>
+    <div class="logo-name">JEE<em>Predict</em></div>
+  </a>
+  <div class="header-mid">
+    <span class="hm-dot"></span>
+    April 2025 Session
+  </div>
+  <div class="header-right">
+    <div class="balance-pill">
+      <div>
+        <div class="bp-label">Reddium</div>
+        <div class="bp-value" id="hdr-bal">1,000</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="pari-bar">
+  <span class="pari-tag">Parimutuel</span>
+  <span class="pari-text">
+    <b>Odds = Total Pool ÷ Stake on your side</b> &nbsp;·&nbsp;
+    Losing Reddium flows entirely to winners &nbsp;·&nbsp;
+    Odds update live with every bet
+  </span>
+</div>
+
+<div class="ticker"><div class="ticker-rail" id="ticker"></div></div>
+
+<div class="page">
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi" style="--accent:var(--em)">
+      <div class="kpi-label">Balance</div>
+      <div class="kpi-value" id="kpi-bal">1,000<span class="unit">R</span></div>
+      <div class="kpi-sub">Reddium available</div>
+      <div class="kpi-accent"></div>
+    </div>
+    <div class="kpi" style="--accent:var(--gold)">
+      <div class="kpi-label">Total Staked</div>
+      <div class="kpi-value" id="kpi-staked">0<span class="unit">R</span></div>
+      <div class="kpi-sub">across all markets</div>
+      <div class="kpi-accent"></div>
+    </div>
+    <div class="kpi" style="--accent:var(--cobalt)">
+      <div class="kpi-label">Your Positions</div>
+      <div class="kpi-value" id="kpi-bets">0</div>
+      <div class="kpi-sub">open bets</div>
+      <div class="kpi-accent"></div>
+    </div>
+    <div class="kpi" style="--accent:var(--violet)">
+      <div class="kpi-label">Active Markets</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">2S1 through 8S2</div>
+      <div class="kpi-accent"></div>
+    </div>
+  </div>
+
+  <!-- Explainer -->
+  <div class="explainer">
+    <div class="exp-head">
+      <div class="exp-eyebrow">How odds work</div>
+      <div class="exp-title">Real math.<br>No house edge.</div>
+    </div>
+    <div class="exp-divider"></div>
+    <div class="exp-formulas">
+      <div class="formula">
+        <div class="f-label">Display Odds</div>
+        <div class="f-eq">
+          <span class="fr">Odds</span> <span class="fo">=</span><br>
+          <span class="fv">Pool</span> <span class="fo">÷</span> <span class="fv">Side Stake</span>
+        </div>
+        <div class="f-note">e.g. 1000R pool, 250R on 2S1 → 4.00x</div>
+      </div>
+      <div class="formula">
+        <div class="f-label">Your Locked Payout</div>
+        <div class="f-eq">
+          <span class="fr">Payout</span> <span class="fo">=</span><br>
+          <span class="fo">(</span><span class="fv">Stake</span> <span class="fo">÷</span> <span class="fv">New Side</span><span class="fo">)</span> <span class="fo">×</span> <span class="fv">New Pool</span>
+        </div>
+        <div class="f-note">Locked the moment you confirm</div>
+      </div>
+      <div class="formula">
+        <div class="f-label">Market Consensus</div>
+        <div class="f-eq">
+          <span class="fr">Prob</span> <span class="fo">=</span><br>
+          <span class="fv">Side Stake</span> <span class="fo">÷</span> <span class="fv">Total Pool</span>
+        </div>
+        <div class="f-note">What the crowd actually believes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heading -->
+  <div class="page-head">
+    <div class="page-title">Live Markets</div>
+    <div class="page-sub">April 2025 · 11 Shifts · Resolves on NTA Release</div>
+  </div>
+
+  <!-- Markets -->
+  <div class="markets-grid" id="markets"></div>
+
+  <!-- Portfolio -->
+  <div class="portfolio">
+    <div class="port-head">
+      <div class="port-title">Your Positions</div>
+      <div class="port-meta">Odds locked at bet time</div>
+    </div>
+    <div id="portfolio">
+      <div class="empty">// No open positions.<br>Select a market above · choose a shift · enter amount · place bet.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-eyebrow">Confirm Prediction</div>
+    <div class="modal-title">Place Bet</div>
+    <div id="modal-rows"></div>
+    <div class="mwarn" id="modal-warn"></div>
+    <button class="modal-confirm" onclick="confirmBet()">Place Bet</button>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ─── iOS EMOJI CDN ──────────────────────────────────────────
+const CDN = 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.0.1/img/apple/64/';
+const CP = {
+  red:    '1f534', trophy:'1f3c6', down:  '1f4c9',
+  skull:  '1f480', smile: '1f60c', chart: '1f4ca',
+  clip:   '1f4cb', check: '2705',  warn:  '26a0',
+  scale:  '2696',  coin:  '1f4b0', up:    '1f4c8',
+  person: '1f464', lock:  '1f512', fire:  '1f525',
+};
+const E = (key, cls='e') =>
+  `<img class="${cls}" src="${CDN}${CP[key]}.png" alt="${key}">`;
+const Reddium = E('red');
+
+// ─── PARIMUTUEL CORE ────────────────────────────────────────
+const SHIFTS = ['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
+const C99 = ['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
+
+const MKTS = [
+  { id:'highest', icon:'trophy', name:'Highest Cutoff Shift',  desc:'Which shift will have the highest overall cutoff?', color:'var(--gold)',   dim:'var(--gold-d)'   },
+  { id:'lowest',  icon:'down',   name:'Lowest Cutoff Shift',   desc:'Which shift will have the lowest overall cutoff?',  color:'var(--ruby)',   dim:'var(--ruby-d)'   },
+  { id:'hardest', icon:'skull',  name:'Hardest Shift',         desc:'Which shift had the most difficult paper?',          color:'var(--amber)',  dim:'var(--amber-d)'  },
+  { id:'easiest', icon:'smile',  name:'Easiest Shift',         desc:'Which shift felt most accessible to students?',      color:'var(--cobalt)', dim:'var(--cobalt-d)' },
+];
+
+let balance = 1000, bets = [], pending = null, selected = {};
+
+let staked = {};
+MKTS.forEach(m => { staked[m.id]={}; SHIFTS.forEach(s=>{ staked[m.id][s]=0; }); });
+staked['c99']={};
+C99.forEach(r=>{ staked['c99'][r]=0; });
+
+// ─── MATH ──────────────────────────────────────────────────
+const pool  = id => Object.values(staked[id]).reduce((a,b)=>a+b,0);
+const dOdds = (id,opt) => { const p=pool(id),s=staked[id][opt]; return (p&&s)?p/s:null; };
+const lPay  = (id,opt,stake) => { const np=pool(id)+stake, ns=staked[id][opt]+stake; return (stake/ns)*np; };
+const lOdds = (id,opt,stake) => lPay(id,opt,stake)/stake;
+const pct   = (id,opt) => { const p=pool(id); return p?(staked[id][opt]/p)*100:0; };
+
+// ─── FORMAT ────────────────────────────────────────────────
+const fmt  = n => Math.floor(n).toLocaleString('en-IN');
+const fOdds= x => x?x.toFixed(2)+'×':'—';
+const fPct = p => p?p.toFixed(1)+'%':'—';
+
+// ─── TICKER ────────────────────────────────────────────────
+function buildTicker(){
+  const p = pool('highest');
+  const items = SHIFTS.map(s=>{
+    const v = p ? pct('highest',s) : null;
+    return `<span class="t-item">
+      <span class="t-shift">${s}</span>
+      <span class="${v?'t-val':'t-zero'}">${v?v.toFixed(1)+'%':'—'}</span>
+    </span>`;
+  }).join('');
+  const el = document.getElementById('ticker');
+  el.innerHTML = items+items+items;
+}
+
+// ─── RENDER MARKETS ────────────────────────────────────────
+function renderMarkets(){
+  const el = document.getElementById('markets');
+
+  const cards = MKTS.map(m=>{
+    const p = pool(m.id), sel = selected[m.id];
+    const sorted = [...SHIFTS].sort((a,b)=>staked[m.id][b]-staked[m.id][a]||a.localeCompare(b));
+
+    const opts = sorted.map(s=>{
+      const pp = pct(m.id,s), od = dOdds(m.id,s), sk = staked[m.id][s];
+      const isSel = sel===s;
+      let oddsLabel, oddsClass;
+      if(!p)         { oddsLabel='first bet'; oddsClass='o-first'; }
+      else if(!sk)   { oddsLabel='—';         oddsClass='o-dim'; }
+      else           { oddsLabel=fOdds(od);   oddsClass=''; }
+
+      return `<div class="opt-row${isSel?' sel':''}"
+        style="--fill:${pp.toFixed(1)}%;--mc-color:${m.color};--mc-dim:${m.dim}"
+        onclick="selectOpt('${m.id}','${s}')">
+        <span class="o-name">${s}</span>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pp.toFixed(1)}%;background:${m.color}"></div></div>
+        <span class="o-pct${!sk?' o-dim':''}">${sk?fPct(pp):'—'}</span>
+        <span class="o-stk${!sk?' o-dim':''}">${sk?fmt(sk)+'R':'—'}</span>
+        <span class="o-odds ${oddsClass}" style="${!oddsClass?'color:'+m.color:''}">${oddsLabel}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="mcard" style="--mc-color:${m.color};--mc-dim:${m.dim}">
+      <div class="mcard-head">
+        <div>
+          <div class="mcard-icon" style="--mc-dim:${m.dim}">${E(m.icon,'e-lg')}</div>
+          <div class="mcard-name">${m.name}</div>
+          <div class="mcard-desc">${m.desc}</div>
+        </div>
+        <div class="mcard-meta">
+          <div class="pool-label">Pool</div>
+          <div class="pool-val">${fmt(pool(m.id))} R</div>
+          <div class="open-badge">Open</div>
+        </div>
+      </div>
+      <div class="mcard-body">
+        <div class="opts-col-heads">
+          <span></span><span>Distribution</span>
+          <span style="text-align:right">Share</span>
+          <span style="text-align:right">Staked</span>
+          <span style="text-align:right">Odds</span>
+        </div>
+        <div class="opts-list">${opts}</div>
+        <div class="bet-row">
+          <div class="sel-info">
+            ${sel?`Picked: <b>${sel}</b>`:'<span style="color:var(--text3)">← select a shift</span>'}
+          </div>
+          <div class="inp-wrap" style="--mc-color:${m.color}">
+            <span class="inp-icon">${Reddium}</span>
+            <input class="bet-inp" id="inp-${m.id}" type="number" placeholder="Amount" min="1" step="1"
+              oninput="preview('${m.id}')">
+          </div>
+          <button class="bet-btn" style="background:${m.color}"
+            onclick="openModal('${m.id}')"
+            ${!sel?'disabled':''}>Bet</button>
+        </div>
+        <div class="preview-line" id="prev-${m.id}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 99 percentile
+  const p99 = pool('c99'), s99 = selected['c99'];
+  const cOpts = C99.map(r=>{
+    const pp=pct('c99',r), od=dOdds('c99',r), sk=staked['c99'][r];
+    const isSel=s99===r;
+    const oddsLabel = !p99?'first bet':(!sk?'—':fOdds(od));
+    const oddsClass = (!p99||!sk)?'c-none':'';
+    return `<div class="c-opt${isSel?' sel':''}" onclick="selectOpt('c99','${r}')">
+      <div class="c-range">${r}</div>
+      <div class="c-bar"><div class="c-bar-fill" style="width:${pp.toFixed(1)}%"></div></div>
+      <div class="c-pct">${sk?fPct(pp):'—'}</div>
+      <div class="c-stk">${sk?fmt(sk)+'R':'no bets'}</div>
+      <div class="c-odds ${oddsClass}">${oddsLabel}</div>
+    </div>`;
+  }).join('');
+
+  const wide = `<div class="mcard wide">
+    <div class="mcard-head" style="--mc-color:var(--violet)">
+      <div>
+        <div class="mcard-icon" style="--mc-dim:var(--violet-d)">${E('chart','e-lg')}</div>
+        <div class="mcard-name">99 Percentile Score Prediction</div>
+        <div class="mcard-desc">What raw score will land at the 99th percentile in the April session?</div>
+      </div>
+      <div class="mcard-meta">
+        <div class="pool-label">Pool</div>
+        <div class="pool-val">${fmt(p99)} R</div>
+        <div class="open-badge">Open</div>
+      </div>
+    </div>
+    <div class="mcard-body">
+      <div class="cutoff-grid">${cOpts}</div>
+      <div class="bet-row">
+        <div class="sel-info">
+          ${s99?`Picked: <b style="color:var(--violet)">${s99}</b>`:'<span style="color:var(--text3)">← select a score range</span>'}
+        </div>
+        <div class="inp-wrap" style="--mc-color:var(--violet)">
+          <span class="inp-icon">${Reddium}</span>
+          <input class="bet-inp" id="inp-c99" type="number" placeholder="Amount" min="1" step="1"
+            oninput="preview('c99')">
+        </div>
+        <button class="bet-btn" style="background:var(--violet);color:#fff"
+          onclick="openModal('c99')"
+          ${!s99?'disabled':''}>Bet</button>
+      </div>
+      <div class="preview-line" id="prev-c99"></div>
+    </div>
+  </div>`;
+
+  el.innerHTML = cards + wide;
+  updateKPIs();
+}
+
+// ─── PREVIEW ───────────────────────────────────────────────
+function preview(id){
+  const sel=selected[id], inp=document.getElementById(`inp-${id}`), prev=document.getElementById(`prev-${id}`);
+  if(!prev) return;
+  if(!sel||!inp?.value){ prev.textContent=''; prev.className='preview-line'; return; }
+  const s=parseInt(inp.value);
+  if(!s||s<1){ prev.textContent=''; prev.className='preview-line'; return; }
+  const pay=lPay(id,sel,s), odds=lOdds(id,sel,s);
+  prev.innerHTML = `If ${sel} wins → ${Reddium} ${fmt(pay)} &nbsp;·&nbsp; ${fOdds(odds)} &nbsp;·&nbsp; profit: ${Reddium} +${fmt(pay-s)}`;
+  prev.className='preview-line on';
+}
+
+// ─── SELECT ────────────────────────────────────────────────
+function selectOpt(id,opt){ selected[id]=opt; renderMarkets(); setTimeout(()=>preview(id),10); }
+
+// ─── MODAL ─────────────────────────────────────────────────
+const NAMES={
+  highest:`${E('trophy')} Highest Cutoff`, lowest:`${E('down')} Lowest Cutoff`,
+  hardest:`${E('skull')} Hardest Shift`,   easiest:`${E('smile')} Easiest Shift`,
+  c99:`${E('chart')} 99 Percentile`,
+};
+
+function openModal(id){
+  const sel=selected[id];
+  if(!sel) return toast('Select a shift first','err');
+  const s=parseInt(document.getElementById(`inp-${id}`)?.value||'0');
+  if(!s||s<1) return toast('Enter a valid amount','err');
+  if(s>balance) return toast('Insufficient Reddium','err');
+
+  const np=pool(id)+s, ns=staked[id][sel]+s;
+  const pay=lPay(id,sel,s), odds=lOdds(id,sel,s);
+
+  pending={id,pick:sel,stake:s,odds,pay};
+
+  document.getElementById('modal-rows').innerHTML=`
+    <div class="mrow"><span class="mrow-label">Market</span><span class="mrow-val">${NAMES[id]||id}</span></div>
+    <div class="mrow"><span class="mrow-label">Your Pick</span><span class="mrow-val">${sel}</span></div>
+    <div class="mrow"><span class="mrow-label">Staked</span><span class="mrow-val">${Reddium} ${fmt(s)}</span></div>
+    <div class="mrow"><span class="mrow-label">New Pool</span><span class="mrow-val">${Reddium} ${fmt(np)}</span></div>
+    <div class="mrow"><span class="mrow-label">Locked Odds</span><span class="mrow-val">${fOdds(odds)}</span></div>
+    <div class="mrow"><span class="mrow-label">Locked Payout</span><span class="mrow-val hl">${Reddium} ${fmt(pay)}</span></div>
+    <div class="mrow"><span class="mrow-label">Profit if Win</span><span class="mrow-val hl">${Reddium} +${fmt(pay-s)}</span></div>
+  `;
+  document.getElementById('modal-warn').textContent=
+    `Odds locked at ${fOdds(odds)}. More bets on ${sel} after yours will dilute new bettors' share — yours stays guaranteed.`;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); pending=null; }
+
+function confirmBet(){
+  if(!pending) return;
+  const {id,pick,stake,odds,pay}=pending;
+  balance-=stake;
+  staked[id][pick]+=stake;
+  bets.push({id,pick,stake,odds,pay});
+  const inp=document.getElementById(`inp-${id}`);
+  if(inp) inp.value='';
+  closeModal();
+  renderMarkets();
+  renderPortfolio();
+  buildTicker();
+  toast(`Bet placed — ${Reddium} ${fmt(stake)} on ${pick} @ ${fOdds(odds)}`,'ok');
+}
+
+// ─── PORTFOLIO ─────────────────────────────────────────────
+function renderPortfolio(){
+  const el=document.getElementById('portfolio');
+  if(!bets.length){
+    el.innerHTML='<div class="empty">// No open positions.<br>Select a market above · choose a shift · enter amount · place bet.</div>';
+    return;
+  }
+  const rows=bets.map(b=>{
+    const p=pool(b.id), side=staked[b.id][b.pick];
+    const livePay=side?(b.stake/side)*p:0;
+    const liveOdds=side?livePay/b.stake:0;
+    return `<tr>
+      <td class="td-mk">${NAMES[b.id]||b.id}</td>
+      <td><span class="td-pick">${b.pick}</span></td>
+      <td class="td-stk">${Reddium} ${fmt(b.stake)}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fOdds(b.odds)}</td>
+      <td class="td-win">${Reddium} ${fmt(livePay)}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fOdds(liveOdds)}</td>
+      <td><span class="status-tag">Pending</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`<table class="ptable">
+    <thead><tr>
+      <th>Market</th><th>Pick</th><th>Staked</th>
+      <th>Locked Odds</th><th>Live Payout</th><th>Live Odds</th><th>Status</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ─── KPIs ──────────────────────────────────────────────────
+function updateKPIs(){
+  const ts=bets.reduce((a,b)=>a+b.stake,0);
+  document.getElementById('hdr-bal').textContent=fmt(balance);
+  document.getElementById('kpi-bal').innerHTML=fmt(balance)+'<span class="unit">R</span>';
+  document.getElementById('kpi-staked').innerHTML=fmt(ts)+'<span class="unit">R</span>';
+  document.getElementById('kpi-bets').textContent=bets.length;
+}
+
+// ─── TOAST ─────────────────────────────────────────────────
+function toast(msg,type='ok'){
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=type==='ok'?`${E('check')} ${msg}`:`${E('warn')} ${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+// ─── CLOSE OVERLAY ─────────────────────────────────────────
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ─── INIT ──────────────────────────────────────────────────
+buildTicker();
+renderMarkets();
+renderPortfolio();
+</script>
+</body>
+</html>
