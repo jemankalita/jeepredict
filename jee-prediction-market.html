@@ -225,7 +225,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
   <div class="header-right">
     <div class="balance-pill" id="balance-pill" style="display:none">
       <div>
-        <div class="bp-label">Reddium</div>
+        <div class="bp-label" id="bp-label">Reddium</div>
         <div class="bp-value" id="hdr-bal">—</div>
       </div>
     </div>
@@ -812,9 +812,8 @@ sb.auth.onAuthStateChange(async(event,session)=>{
     document.getElementById('auth-buttons').style.display='none';
     document.getElementById('logout-btn').style.display='block';
     document.getElementById('balance-pill').style.display='flex';
-    document.getElementById('bp-label').textContent =
-      currentUser.user_metadata?.username ||
-      currentUser.email.split('@')[0];
+    const _lbl=document.getElementById('bp-label');
+    if(_lbl) _lbl.textContent = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
 
     // Fetch profile
     const {data, error} = await sb
@@ -828,7 +827,7 @@ sb.auth.onAuthStateChange(async(event,session)=>{
     if(data){
       userProfile = data;
       document.getElementById('hdr-bal').textContent = fmt(data.reddium_balance);
-      document.getElementById('bp-label').textContent = data.username || data.email.split('@')[0];
+      const _lbl2=document.getElementById('bp-label'); if(_lbl2) _lbl2.textContent = data.username || data.email.split('@')[0];
       document.getElementById('kpi-bal').innerHTML = fmt(data.reddium_balance)+'<span class="unit">R</span>';
     } else {
       // Create missing profile
@@ -842,7 +841,7 @@ sb.auth.onAuthStateChange(async(event,session)=>{
       if(newP){
         userProfile = newP;
         document.getElementById('hdr-bal').textContent = fmt(newP.reddium_balance);
-        document.getElementById('bp-label').textContent = newP.username;
+        const _lbl3=document.getElementById('bp-label'); if(_lbl3) _lbl3.textContent = newP.username;
         document.getElementById('kpi-bal').innerHTML = fmt(newP.reddium_balance)+'<span class="unit">R</span>';
       }
     }
