@@ -4,8 +4,6 @@
 
 A prediction market built specifically for **JEE Mains April 2025**. Pick which shift has the highest cutoff, the hardest paper, the lowest cutoff, the easiest paper, or predict the average score range — and earn **Reddium** when you're right.
 
-Live at → **[jemankalita.github.io/jeepredict](https://jemankalita.github.io/jeepredict)**
-
 ---
 
 ## What is this
@@ -73,18 +71,6 @@ Reddium (🔴) is the virtual currency used across all markets.
 ├── index.html                  # Landing page (with video background)
 ├── jee-prediction-market.html  # Prediction market app
 └── README.md
-```
-
----
-
-## Running Locally
-
-No setup needed. Just open `index.html` in any browser.
-
-```bash
-git clone https://github.com/jemankalita/jeepredict.git
-cd jeepredict
-# open index.html in your browser
 ```
 
 ---
