@@ -210,8 +210,76 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 
 
 
-@media(max-width:1000px){.markets-grid{grid-template-columns:1fr}.mcard.wide{grid-column:1}.kpi-row{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){header{padding:0 16px}.page{padding:20px 16px 60px}.explainer{grid-template-columns:1fr;gap:20px}.exp-divider{display:none}.exp-formulas{grid-template-columns:1fr}.pari-bar,.tabs{padding:0 16px}}
+@media(max-width:1000px){
+  .markets-grid{grid-template-columns:1fr}
+  .mcard.wide{grid-column:1}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .explainer{grid-template-columns:1fr;gap:20px}
+  .exp-divider{display:none}
+  .exp-formulas{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  header{padding:0 14px;height:52px}
+  .logo-name{font-size:13px}
+  .header-mid{display:none}
+  .balance-pill{padding:5px 10px}
+  .bp-value{font-size:12px}
+  .bp-label{font-size:8px}
+  .tabs{padding:0 14px;overflow-x:auto;gap:0}
+  .tab{padding:12px 14px;font-size:10px;white-space:nowrap}
+  .pari-bar{padding:7px 14px;flex-direction:column;gap:3px;align-items:flex-start}
+  .pari-text{font-size:9px}
+  .ticker{padding:6px 0}
+  .t-item{padding:0 16px;font-size:9px}
+  .page{padding:16px 14px 60px}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:1px}
+  .kpi{padding:14px 16px}
+  .kpi-value{font-size:20px}
+  .kpi-label{font-size:8px;margin-bottom:6px}
+  .kpi-sub{font-size:10px}
+  .explainer{display:none}
+  .page-head{flex-direction:column;gap:4px;margin-bottom:14px}
+  .page-title{font-size:24px}
+  .page-sub{font-size:9px}
+  .markets-grid{gap:12px}
+  .mcard-head{padding:14px 16px 10px}
+  .mcard-icon{width:30px;height:30px;border-radius:7px}
+  .mcard-name{font-size:13px}
+  .mcard-desc{font-size:11px}
+  .pool-val{font-size:12px}
+  .mcard-body{padding:10px 16px 14px}
+  .opts-col-heads{display:none}
+  .opt-row{grid-template-columns:36px 1fr 44px 52px;gap:6px;padding:8px}
+  .o-pct{display:none}
+  .bet-row{flex-wrap:wrap;gap:6px}
+  .sel-info{width:100%;min-width:100%}
+  .inp-wrap{flex:1}
+  .bet-inp{width:60px}
+  .bet-btn{padding:8px 14px;font-size:10px}
+  .preview-line{font-size:9px}
+  .cutoff-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:5px}
+  .c-opt{padding:8px 6px}
+  .c-range{font-size:11px}
+  .c-odds{font-size:10px}
+  .exp-formulas{grid-template-columns:1fr}
+  .port-head{padding:12px 16px}
+  .port-title{font-size:16px}
+  .ptable th,.ptable td{padding:8px 12px;font-size:10px}
+  .lb-table th,.lb-table td{padding:8px 12px;font-size:10px}
+  .lb-rank{font-size:16px}
+  .empty{padding:28px;font-size:10px}
+  .modal{padding:20px;border-radius:14px}
+  .modal-title{font-size:22px}
+  .mrow{font-size:10px;padding:8px 0}
+  .form-input{font-size:11px;padding:9px 12px}
+  .modal-submit{padding:11px;font-size:11px}
+}
+@media(max-width:380px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .opt-row{grid-template-columns:30px 1fr 44px;gap:4px}
+  .o-stk{display:none}
+  header{padding:0 10px}
+}
 </style>
 </head>
 <body>
@@ -233,7 +301,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
       <button class="auth-btn btn-login" onclick="openAuth('login')">Sign In</button>
       <button class="auth-btn btn-signup" onclick="openAuth('signup')">Sign Up</button>
     </div>
-    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="handleSignOut()">Sign Out</button>
+    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="sb.auth.signOut()">Sign Out</button>
   </div>
 </header>
 
