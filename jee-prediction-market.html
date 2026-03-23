@@ -420,14 +420,7 @@ const fO=x=>x?x.toFixed(2)+'×':'—';
 const fP=p=>p?p.toFixed(1)+'%':'—';
 
 // ── AUTH ──────────────────────────────────────────────
-// We use username + password only.
-// Supabase requires an email field internally, so we
-// generate a fake one: username@jeepredict.app
-// The user never sees or types an email.
-
-function fakeEmail(username){
-  return username.toLowerCase().trim() + '@jeepredict.app';
-}
+function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
 
 function openAuth(mode){
   authMode=mode;
@@ -439,11 +432,10 @@ function openAuth(mode){
 function closeAuth(){
   document.getElementById('auth-overlay').classList.remove('open');
   document.getElementById('auth-error').textContent='';
-  document.getElementById('auth-error').style.color='var(--ruby)';
   document.getElementById('auth-username').value='';
   document.getElementById('auth-password').value='';
-  const conf=document.getElementById('auth-confirm');
-  if(conf) conf.value='';
+  const c=document.getElementById('auth-confirm');
+  if(c) c.value='';
 }
 
 function switchAuthTab(mode){
@@ -453,104 +445,70 @@ function switchAuthTab(mode){
   document.getElementById('auth-title').textContent=mode==='login'?'Welcome back':'Create account';
   document.getElementById('auth-submit').textContent=mode==='login'?'Sign In':'Sign Up';
   document.getElementById('auth-error').textContent='';
-  // show confirm password only on signup
   const cf=document.getElementById('field-confirm');
   if(cf) cf.style.display=mode==='signup'?'block':'none';
 }
 
 async function submitAuth(){
-  const username = document.getElementById('auth-username').value.trim();
-  const pass     = document.getElementById('auth-password').value;
-  const confirm  = document.getElementById('auth-confirm')?.value;
-  const btn      = document.getElementById('auth-submit');
-  const errEl    = document.getElementById('auth-error');
+  const username=document.getElementById('auth-username').value.trim();
+  const pass=document.getElementById('auth-password').value;
+  const confirm=document.getElementById('auth-confirm')?.value;
+  const errEl=document.getElementById('auth-error');
+  const btn=document.getElementById('auth-submit');
 
   errEl.textContent='';
-
-  // ── Validation ──
-  if(!username){ errEl.textContent='Please enter a username.'; return; }
-  if(!pass){     errEl.textContent='Please enter a password.'; return; }
+  if(!username){errEl.textContent='Enter a username.';return}
+  if(!pass){errEl.textContent='Enter a password.';return}
   if(!/^[a-zA-Z0-9_]{3,20}$/.test(username)){
-    errEl.textContent='Username: 3–20 chars, letters/numbers/underscores only.';
-    return;
+    errEl.textContent='3-20 chars, letters/numbers/underscores only.';return;
   }
   if(authMode==='signup'){
-    if(pass.length < 6){ errEl.textContent='Password must be at least 6 characters.'; return; }
-    if(pass !== confirm){ errEl.textContent='Passwords do not match.'; return; }
+    if(pass.length<6){errEl.textContent='Password must be 6+ characters.';return}
+    if(pass!==confirm){errEl.textContent='Passwords do not match.';return}
   }
-
-  btn.disabled=true;
-  btn.textContent=authMode==='signup'?'Creating account...':'Signing in...';
-
-  const email = fakeEmail(username);
 
   btn.disabled=true;
   btn.textContent=authMode==='signup'?'Creating...':'Signing in...';
+  errEl.textContent='';
+
+  const email=fakeEmail(username);
 
   if(authMode==='signup'){
-
-    const{data,error}=await sb.auth.signUp({
-      email,
-      password:pass,
-      options:{data:{username}}
-    });
-
-    btn.disabled=false;
-    btn.textContent='Sign Up';
-
-    if(error){
-      errEl.textContent=error.message.toLowerCase().includes('already')
-        ?'Username taken. Try signing in.'
-        :error.message;
+    const r=await sb.auth.signUp({email,password:pass,options:{data:{username}}});
+    btn.disabled=false; btn.textContent='Sign Up';
+    if(r.error){
+      errEl.textContent=r.error.message.includes('already')?'Username taken — try signing in.':r.error.message;
       return;
     }
-
-    // Upsert profile — belt and braces alongside the trigger
-    if(data?.user){
-      sb.from('profiles').upsert({
-        id:data.user.id,
-        email,
-        username,
-        reddium_balance:1000
-      },{onConflict:'id'}).then(()=>{});
+    if(r.data?.user){
+      await sb.from('profiles').upsert({id:r.data.user.id,email,username,reddium_balance:1000},{onConflict:'id'});
     }
-
     closeAuth();
-    toast('Welcome to JEEPredict! 1,000 Reddium credited.','ok');
-
+    toast('Welcome to JEEPredict!','ok');
   } else {
-
-    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-
-    btn.disabled=false;
-    btn.textContent='Sign In';
-
-    if(error){
-      errEl.textContent='Incorrect username or password.';
-      return;
-    }
-
+    const r=await sb.auth.signInWithPassword({email,password:pass});
+    btn.disabled=false; btn.textContent='Sign In';
+    if(r.error){errEl.textContent='Incorrect username or password.';return}
     closeAuth();
     toast('Welcome back!','ok');
-
   }
 }
 
 async function signOut(){
   await sb.auth.signOut();
-  currentUser=null; userProfile=null; userBets=[];
-  updateAuthUI(); renderPositions();
+  currentUser=null;userProfile=null;userBets=[];
+  updateAuthUI();renderPositions();
   toast('Signed out','ok');
 }
 
-function togglePass(inputId, btn){
+function togglePass(inputId,btn){
   const inp=document.getElementById(inputId);
-  const isPass=inp.type==='password';
-  inp.type=isPass?'text':'password';
-  btn.querySelector('svg').innerHTML=isPass
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.querySelector('svg').innerHTML=show
     ?'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
     :'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  btn.style.color=isPass?'var(--gold)':'var(--text3)';
+  btn.style.color=show?'var(--gold)':'var(--text3)';
 }
 
 // ── DATA ──────────────────────────────────────────────
