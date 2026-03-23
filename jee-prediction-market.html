@@ -233,7 +233,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
       <button class="auth-btn btn-login" onclick="openAuth('login')">Sign In</button>
       <button class="auth-btn btn-signup" onclick="openAuth('signup')">Sign Up</button>
     </div>
-    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="handleSignOut()">Sign Out</button>
   </div>
 </header>
 
@@ -501,6 +501,19 @@ async function signOut(){
   toast('Signed out','ok');
 }
 
+async function handleSignOut(){
+  console.log('Sign out clicked');
+  const btn=document.getElementById('logout-btn');
+  if(btn){btn.textContent='...';btn.disabled=true;}
+  await sb.auth.signOut();
+  currentUser=null;userProfile=null;userBets=[];
+  if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null;}
+  updateAuthUI();
+  renderPositions();
+  renderMarkets();
+  toast('Signed out','ok');
+}
+
 function togglePass(inputId,btn){
   const inp=document.getElementById(inputId);
   const show=inp.type==='password';
@@ -525,8 +538,12 @@ async function loadPool(){
 
 async function loadUserProfile(){
   if(!currentUser)return;
-  const{data}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
-  if(data){userProfile=data;updateAuthUI()}
+  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  console.log('loadUserProfile:', data, error?.message);
+  if(data){
+    userProfile=data;
+    updateAuthUI();
+  }
 }
 
 async function loadUserBets(){
@@ -729,23 +746,25 @@ function updateAuthUI(){
   document.getElementById('auth-buttons').style.display=in_?'none':'flex';
   document.getElementById('logout-btn').style.display=in_?'block':'none';
   document.getElementById('balance-pill').style.display=in_?'flex':'none';
-  const bal=userProfile?.reddium_balance;
-  const uname=userProfile?.username
+
+  const bal  = userProfile?.reddium_balance ?? null;
+  const uname= userProfile?.username
     || currentUser?.user_metadata?.username
     || currentUser?.email?.split('@')[0]
     || '';
-  // Always update label with username
-  const labelEl=document.getElementById('bp-label');
-  if(labelEl) labelEl.textContent=uname||'Reddium';
-  if(bal!=null){
-    document.getElementById('hdr-bal').textContent=fmt(bal);
-    document.getElementById('kpi-bal').innerHTML=fmt(bal)+'<span class="unit">R</span>';
-  } else if(in_){
-    document.getElementById('hdr-bal').textContent='...';
-    document.getElementById('kpi-bal').innerHTML='...<span class="unit">R</span>';
+
+  const labelEl = document.getElementById('bp-label');
+  const balEl   = document.getElementById('hdr-bal');
+  const kpiEl   = document.getElementById('kpi-bal');
+
+  if(labelEl) labelEl.textContent = uname || 'Reddium';
+
+  if(bal !== null){
+    if(balEl) balEl.textContent = fmt(bal);
+    if(kpiEl) kpiEl.innerHTML   = fmt(bal)+'<span class="unit">R</span>';
   } else {
-    document.getElementById('hdr-bal').textContent='—';
-    document.getElementById('kpi-bal').innerHTML='—';
+    if(balEl) balEl.textContent = in_ ? '...' : '—';
+    if(kpiEl) kpiEl.innerHTML   = in_ ? '...<span class="unit">R</span>' : '—';
   }
 }
 
