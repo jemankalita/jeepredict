@@ -646,28 +646,13 @@ async function submitAuth(){
   }
 }
 
-async function signOut(){
-  try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
-  const { error } = await sb.auth.signOut({ scope:'local' });
-  if(error){toast(error.message,'err');return}
-  await applySession(null);
-  clearAuthStorage();
-  window.location.replace(`index.html?signed_out=${Date.now()}&v=${APP_VERSION}`);
-}
-
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
   try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
-  const { error } = await sb.auth.signOut({ scope:'local' });
-  if (error) {
-    if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
-    toast(error.message, 'err');
-    return;
-  }
   await applySession(null);
   clearAuthStorage();
-  if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
+  sb.auth.signOut({ scope:'local' }).catch(err=>console.warn('[Sign out background]', err?.message||err));
   window.location.replace(`index.html?signed_out=${Date.now()}&v=${APP_VERSION}`);
 }
 
@@ -1169,6 +1154,8 @@ async function applySession(session){
       userProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
       userProfile?.reddium_balance ?? 1000
     );
+    await loadPool();
+    await loadUserProfile();
     await loadUserBets();
     subscribeRealtime();
     updateKPIs();
