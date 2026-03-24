@@ -673,9 +673,9 @@ async function loadPool(){
     const result=await fetchPoolRows();
     data=result.data;
     error=result.error;
-    if(!error && data) break;
+    if(!error && Array.isArray(data) && data.length>0) break;
   }
-  if(error || !data){
+  if(error || !Array.isArray(data) || data.length===0){
     console.error('loadPool failed:', error?.message);
     const cached=loadPoolCache();
     if(cached){
@@ -698,11 +698,17 @@ async function loadPool(){
 
 async function loadUserProfile(){
   if(!currentUser)return;
+  const cachedProfile=loadProfileCache(currentUser.id);
   const { data: profile, error } = await fetchMyProfile();
   console.log('loadUserProfile:', profile, error?.message);
   if(profile){
     userProfile=profile;
     saveProfileCache(profile);
+    updateAuthUI();
+    return;
+  }
+  if(cachedProfile){
+    userProfile=cachedProfile;
     updateAuthUI();
   }
 }
@@ -1109,6 +1115,10 @@ async function ensureProfile(user){
   if(profile){
     saveProfileCache(profile);
     return profile;
+  }
+
+  if(cachedProfile){
+    return cachedProfile;
   }
 
   if(error){
