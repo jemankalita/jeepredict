@@ -1,84 +1,90 @@
 # JEEPredict
 
-> Predict JEE Mains April 2026 shifts. Bet Reddium. Win from the loser pool.
+JEEPredict is a lightweight prediction market for JEE Main April 2026. Users place bets with virtual currency called `Reddium` on outcomes like:
 
-A prediction market built specifically for **JEE Mains April 2026**. Pick which shift has the highest cutoff, the hardest paper, the lowest cutoff, the easiest paper, or predict the average score range — and earn **Reddium** when you're right.
+- highest cutoff shift
+- lowest cutoff shift
+- hardest shift
+- easiest shift
+- average score across shifts for 99 percentile
 
----
+No real money is involved.
 
-## What is this
+## How the website works
 
-JEEPredict is a parimutuel prediction market where users stake virtual currency (Reddium) on outcomes related to JEE Mains April 2026 shifts. All odds are calculated in real-time from actual stakes — no house edge, no fake numbers.
+The site has two main pages:
 
----
+- [index.html](C:\Users\User\Downloads\predictJEE\index.html): landing page
+- [jee-prediction-market.html](C:\Users\User\Downloads\predictJEE\jee-prediction-market.html): the actual market app
 
-## Markets
+The frontend is plain HTML, CSS, and JavaScript. Data is stored in Supabase/Postgres.
 
-| Market | Description |
-|--------|-------------|
-| 🏆 Highest Cutoff Shift | Which shift will have the highest overall cutoff? |
-| 📉 Lowest Cutoff Shift | Which shift will have the lowest cutoff? |
-| 💀 Hardest Shift | Which shift had the most difficult paper? |
-| 😌 Easiest Shift | Which shift felt most accessible? |
-| 📊 Average Score | What will the average score across all shifts be? (150–200) |
+Main backend pieces:
 
-All 11 shifts available: `2S1 · 2S2 · 4S1 · 4S2 · 5S1 · 5S2 · 6S1 · 6S2 · 7S1 · 7S2 · 8S2`
+- `profiles`: user balances and usernames
+- `bets`: every bet placed by users
+- `pool`: total stake on each option in each market
+- `place_bet(...)`: SQL function that validates a bet, deducts balance, updates pool totals, and stores locked odds/payout
 
----
+## How betting works
 
-## How the odds work
+This is a parimutuel market.
 
-This uses a real **parimutuel** system — the same model used by horse racing and global betting markets.
+That means users are betting against each other, not against the website.
 
+- Every option in a market has a running pool.
+- When more people bet on one side, that side becomes less profitable.
+- Less popular sides have higher odds because less Reddium is staked there.
+- Losing Reddium goes to the winning side when results are resolved.
+
+## Odds and payout
+
+The app uses these formulas:
+
+```text
+Display Odds = Total Pool / Stake on your side
+
+Locked Payout = (Your Stake / New Side Total) * New Total Pool
+
+Implied Probability = Side Stake / Total Pool
 ```
-Display Odds  =  Total Pool  ÷  Staked on your pick
 
-Locked Payout =  (Your Stake ÷ New Side Total)  ×  New Total Pool
+What this means in practice:
 
-Implied Prob  =  Side Stake  ÷  Total Pool
-```
-
-- Odds update live with every bet placed
-- Your payout is **locked** the moment you confirm
-- Zero house edge — all losing Reddium flows directly to winners
-
----
+- `Display Odds` shows the current multiplier for that option right now.
+- `Locked Payout` is calculated at the moment you confirm the bet.
+- After your bet is placed, later bets can change public odds for new users, but your own locked payout stays fixed.
 
 ## Reddium
 
-Reddium (🔴) is the virtual currency used across all markets.
+`Reddium` is the site currency.
 
-- Every new user starts with **1,000 Reddium free**
-- Grow it by making correct predictions
-- Lose it by being wrong
-- No real money involved
+- new users start with a free balance
+- users spend it to place bets
+- if their prediction wins, they receive payout from the final pool
 
----
+## Live updates
 
-## Tech Stack
+The market page updates pool values and pricing as bets come in. The visible total pool, odds, and positions are derived from the current stored pool/bet data.
 
-- **Pure HTML / CSS / JS** — no frameworks, no build tools
-- **Parimutuel engine** — built from scratch in vanilla JS
-- **iOS Emojis** — via `emoji-datasource-apple` CDN
-- **Fonts** — Cormorant Garamond · DM Sans · JetBrains Mono
-- **Video background** — embedded as base64 in the landing page
+## Files
 
----
+- [index.html](C:\Users\User\Downloads\predictJEE\index.html): landing page
+- [jee-prediction-market.html](C:\Users\User\Downloads\predictJEE\jee-prediction-market.html): main app UI
+- [schema.sql](C:\Users\User\Downloads\predictJEE\schema.sql): base database schema
+- [backend_reset.sql](C:\Users\User\Downloads\predictJEE\backend_reset.sql): backend setup/reset script
+- [bot_market_seed.sql](C:\Users\User\Downloads\predictJEE\bot_market_seed.sql): bot users and seeded pool data
 
-## Project Structure
+## Running it
 
+This is a static site, so you can serve it locally with:
+
+```powershell
+python -m http.server 8000
 ```
-├── index.html                  # Landing page (with video background)
-├── jee-prediction-market.html  # Prediction market app
-└── README.md
+
+Then open:
+
+```text
+http://localhost:8000/index.html
 ```
-
----
-
-## Author
-
-Made by **Jeman Kalita** · [github.com/jemankalita](https://github.com/jemankalita)
-
----
-
-*This is a fun prediction market project. No real money is involved. All currency is virtual.*
