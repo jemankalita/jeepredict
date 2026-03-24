@@ -513,6 +513,7 @@ function clearAuthStorage(){
     Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
   }catch(_){}
 }
+const FORCED_SIGNOUT_KEY='jeepredict_forced_signout';
 function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
 
 function openAuth(mode){
@@ -582,18 +583,21 @@ async function submitAuth(){
         return;
       }
     }
+    try{ localStorage.removeItem(FORCED_SIGNOUT_KEY); }catch(_){}
     closeAuth();
     toast('Welcome to JEEPredict!','ok');
   } else {
     const r=await sb.auth.signInWithPassword({email,password:pass});
     btn.disabled=false; btn.textContent='Sign In';
     if(r.error){errEl.textContent='Incorrect username or password.';return}
+    try{ localStorage.removeItem(FORCED_SIGNOUT_KEY); }catch(_){}
     closeAuth();
     toast('Welcome back!','ok');
   }
 }
 
 async function signOut(){
+  try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
   const { error } = await sb.auth.signOut({ scope:'local' });
   if(error){toast(error.message,'err');return}
   await applySession(null);
@@ -603,6 +607,7 @@ async function signOut(){
 
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
+  try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
   const { error } = await sb.auth.signOut({ scope:'local' });
   if (error) {
@@ -895,7 +900,7 @@ function renderMarkets(){
 
   el.innerHTML=cards+`<div class="mcard wide">
     <div class="mcard-head" style="--mc-color:var(--violet)">
-      <div><div class="mcard-icon" style="background:var(--violet-d)">${E('chart','e-lg')}</div><div class="mcard-name">Average Score Across Shifts</div><div class="mcard-desc">What will the average score across all shifts be in the April session? (150–200)</div></div>
+      <div><div class="mcard-icon" style="background:var(--violet-d)">${E('chart','e-lg')}</div><div class="mcard-name">Average Score Across Shifts for 99 Percentile</div><div class="mcard-desc">What will the average score across all shifts be for 99 percentile in the April session? (150–200)</div></div>
       <div class="mcard-meta"><div class="pool-label">Pool</div><div class="pool-val">${fmt(p99)} R</div><div class="open-badge">Open</div></div>
     </div>
     <div class="mcard-body">
@@ -1120,7 +1125,10 @@ async function initApp(){
     window.location.replace(`${window.location.pathname}?${params.toString()}`);
     return;
   }
+  let forceSignedOut=false;
+  try{ forceSignedOut=localStorage.getItem(FORCED_SIGNOUT_KEY)==='1'; }catch(_){}
   if(params.has('signed_out')){
+    forceSignedOut=true;
     clearAuthStorage();
     window.history.replaceState({},'',window.location.pathname);
   }
@@ -1136,6 +1144,10 @@ async function initApp(){
   if(error){
     console.error('[Session]', error.message);
     toast('Could not restore your session','err');
+    return;
+  }
+  if(forceSignedOut){
+    await applySession(null);
     return;
   }
   await applySession(data.session);
