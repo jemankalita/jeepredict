@@ -615,7 +615,8 @@ footer{
 <div class="hero">
   <div class="hero-vid-wrap">
     <video id="vid" autoplay muted loop playsinline preload="auto">
-      <source src="video/hero.mp4" type="video/mp4">
+      <source src="./video/hero.mp4" type="video/mp4">
+    </video>
   </div>
   <div class="hero-veil"></div>
 
@@ -1075,17 +1076,19 @@ window.addEventListener('scroll',()=>document.getElementById('nav').classList.to
 
 // ─── VIDEO ──────────────────────────────────────────────────
 const vid=document.getElementById('vid');
-function tryPlayVideo(){
-  vid.play().then(()=>{
+// Video: attempt play, show on any ready signal
+function readyVideo(){
+  if(!vid.classList.contains('ready')){
     vid.classList.add('ready');
-  }).catch(()=>{
-    // Autoplay blocked - still show video element
-    vid.classList.add('ready');
-  });
+  }
 }
-vid.addEventListener('canplaythrough', tryPlayVideo);
-vid.addEventListener('canplay', tryPlayVideo);
-if(vid.readyState >= 2) tryPlayVideo();
+['loadeddata','canplay','playing'].forEach(ev => vid.addEventListener(ev, readyVideo));
+vid.play().then(readyVideo).catch(()=>{
+  // Autoplay blocked — still reveal (muted video usually allowed)
+  vid.muted = true;
+  vid.play().then(readyVideo).catch(readyVideo);
+});
+if(vid.readyState >= 2) readyVideo();
 
 // ─── MARQUEE ────────────────────────────────────────────────
 const shifts=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
@@ -1135,19 +1138,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     revealEls.forEach(el=>el.classList.add('visible'));
   }, 1500);
 });
-<script>
-const vid = document.getElementById("vid");
-
-function showVideo() {
-  vid.classList.add("ready");
-}
-
-vid.addEventListener("loadeddata", showVideo);
-vid.addEventListener("canplay", showVideo);
-vid.addEventListener("play", showVideo);
-
-// force play
-vid.play().catch(() => {});
 </script>
 </body>
 </html>

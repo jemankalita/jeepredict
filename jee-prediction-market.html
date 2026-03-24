@@ -301,7 +301,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
       <button class="auth-btn btn-login" onclick="openAuth('login')">Sign In</button>
       <button class="auth-btn btn-signup" onclick="openAuth('signup')">Sign Up</button>
     </div>
-    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="sb.auth.signOut()">Sign Out</button>
+    <button class="auth-btn btn-logout" id="logout-btn" style="display:none" onclick="doSignOut()">Sign Out</button>
   </div>
 </header>
 
@@ -569,10 +569,11 @@ async function signOut(){
   toast('Signed out','ok');
 }
 
-async function handleSignOut(){
-  console.log('Sign out clicked');
+async function doSignOut() {
+  const btn = document.getElementById('logout-btn');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
   await sb.auth.signOut();
-  // onAuthStateChange will handle the rest
+  // onAuthStateChange fires and resets everything
 }
 
 function togglePass(inputId,btn){
@@ -868,50 +869,42 @@ function toast(msg,type='ok'){
 });
 
 // ── INIT ──────────────────────────────────────────────
-sb.auth.onAuthStateChange(async(event,session)=>{
-  console.log('Auth event:', event, session?.user?.email);
+
+
+// ── AUTH STATE ────────────────────────────────────────
+
+
+
+sb.auth.onAuthStateChange(async(event, session) => {
+  console.log('[Auth]', event, session?.user?.email || 'none');
   currentUser = session?.user || null;
 
-  if(currentUser){
-    // Close modal
+  if (currentUser) {
+    // 1. Immediately show logged-in chrome
     document.getElementById('auth-overlay')?.classList.remove('open');
+    setUI(true, currentUser.user_metadata?.username || currentUser.email.split('@')[0], null);
 
-    // Show logged-in state immediately
-    document.getElementById('auth-buttons').style.display='none';
-    document.getElementById('logout-btn').style.display='block';
-    document.getElementById('balance-pill').style.display='flex';
-    const _lbl=document.getElementById('bp-label');
-    if(_lbl) _lbl.textContent = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-
-    // Fetch profile
-    const {data, error} = await sb
+    // 2. Fetch profile
+    const { data, error } = await sb
       .from('profiles')
-      .select('*')
+      .select('id, username, reddium_balance')
       .eq('id', currentUser.id)
       .single();
 
-    console.log('Profile fetch:', data, error?.message);
+    console.log('[Profile]', data, error?.message);
 
-    if(data){
+    if (data) {
       userProfile = data;
-      document.getElementById('hdr-bal').textContent = fmt(data.reddium_balance);
-      const _lbl2=document.getElementById('bp-label'); if(_lbl2) _lbl2.textContent = data.username || data.email.split('@')[0];
-      document.getElementById('kpi-bal').innerHTML = fmt(data.reddium_balance)+'<span class="unit">R</span>';
+      setUI(true, data.username, Number(data.reddium_balance));
     } else {
-      // Create missing profile
+      // Create profile for new user
       const uname = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-      const {data:newP} = await sb.from('profiles').upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        username: uname,
-        reddium_balance: 1000
-      },{onConflict:'id'}).select().single();
-      if(newP){
-        userProfile = newP;
-        document.getElementById('hdr-bal').textContent = fmt(newP.reddium_balance);
-        const _lbl3=document.getElementById('bp-label'); if(_lbl3) _lbl3.textContent = newP.username;
-        document.getElementById('kpi-bal').innerHTML = fmt(newP.reddium_balance)+'<span class="unit">R</span>';
-      }
+      const { data: created } = await sb
+        .from('profiles')
+        .upsert({ id: currentUser.id, email: currentUser.email, username: uname, reddium_balance: 1000 }, { onConflict: 'id' })
+        .select()
+        .single();
+      if (created) { userProfile = created; setUI(true, uname, 1000); }
     }
 
     await loadUserBets();
@@ -919,18 +912,33 @@ sb.auth.onAuthStateChange(async(event,session)=>{
     updateKPIs();
 
   } else {
-    // Logged out state
     userProfile = null; userBets = [];
-    if(realtimeSub){ sb.removeChannel(realtimeSub); realtimeSub=null; }
-
-    document.getElementById('auth-buttons').style.display='flex';
-    document.getElementById('logout-btn').style.display='none';
-    document.getElementById('balance-pill').style.display='none';
-    document.getElementById('kpi-bal').innerHTML='—';
-
+    if (realtimeSub) { sb.removeChannel(realtimeSub); realtimeSub = null; }
+    setUI(false, '', null);
     renderPositions();
   }
 });
+
+function setUI(isIn, username, balance) {
+  const el = id => document.getElementById(id);
+  const pill   = el('balance-pill');
+  const authBtns = el('auth-buttons');
+  const logoutBtn = el('logout-btn');
+  const label  = el('bp-label');
+  const balEl  = el('hdr-bal');
+  const kpiEl  = el('kpi-bal');
+
+  if (pill)     pill.style.display     = isIn ? 'flex'  : 'none';
+  if (authBtns) authBtns.style.display = isIn ? 'none'  : 'flex';
+  if (logoutBtn) logoutBtn.style.display = isIn ? 'block' : 'none';
+  if (label)    label.textContent      = username || 'Reddium';
+
+  const formatted = balance != null ? fmt(balance) : null;
+  if (balEl)  balEl.textContent  = formatted ?? (isIn ? '…' : '—');
+  if (kpiEl)  kpiEl.innerHTML    = formatted != null
+    ? formatted + '<span class="unit">R</span>'
+    : (isIn ? '…<span class="unit">R</span>' : '—');
+}
 
 (async()=>{
   await loadPool();
