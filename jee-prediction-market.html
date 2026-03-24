@@ -484,6 +484,7 @@ const MKTS=[
 const MNAMES={highest:`${E('trophy')} Highest Cutoff`,lowest:`${E('down')} Lowest Cutoff`,hardest:`${E('skull')} Hardest Shift`,easiest:`${E('smile')} Easiest Shift`,c99:`${E('chart')} Avg Score`};
 
 let currentUser=null,userProfile=null,userBets=[],poolData={},selected={},pending=null,authMode='login',realtimeSub=null;
+let poolLoadSeq=0;
 
 // ── PARIMUTUEL MATH ───────────────────────────────────
 const poolFor=(id)=>Object.values(poolData[id]||{}).reduce((a,b)=>a+b,0);
@@ -668,12 +669,16 @@ function togglePass(inputId,btn){
 
 // ── DATA ──────────────────────────────────────────────
 async function loadPool(){
+  const seq=++poolLoadSeq;
   let data=null,error=null;
   for(let attempt=0; attempt<3; attempt++){
     const result=await fetchPoolRows();
     data=result.data;
     error=result.error;
     if(!error && Array.isArray(data) && data.length>0) break;
+  }
+  if(seq !== poolLoadSeq){
+    return;
   }
   if(error || !Array.isArray(data) || data.length===0){
     console.error('loadPool failed:', error?.message);
@@ -1202,7 +1207,6 @@ async function initApp(){
   }
   renderMarkets();
   buildTicker();
-  await loadPool();
 
   if(window.location.protocol === 'file:'){
     toast('Use a local server instead of file:// for Supabase auth and bets.', 'err');
