@@ -502,6 +502,16 @@ const fO=x=>x?x.toFixed(2)+'×':'—';
 const fP=p=>p?p.toFixed(1)+'%':'—';
 
 // ── AUTH ──────────────────────────────────────────────
+function clearAuthStorage(){
+  try{
+    Object.keys(localStorage).forEach(key=>{
+      if(key.startsWith('sb-') || key.includes('supabase') || key.includes('vjwpyfveedcidbttdmmn')){
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
+  }catch(_){}
+}
 function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
 
 function openAuth(mode){
@@ -586,15 +596,8 @@ async function signOut(){
   const { error } = await sb.auth.signOut({ scope:'local' });
   if(error){toast(error.message,'err');return}
   await applySession(null);
-  try{
-    Object.keys(localStorage).forEach(key=>{
-      if(key.startsWith('sb-') || key.includes('supabase') || key.includes('vjwpyfveedcidbttdmmn')){
-        localStorage.removeItem(key);
-      }
-    });
-    Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
-  }catch(_){}
-  window.location.replace('index.html');
+  clearAuthStorage();
+  window.location.replace(`index.html?signed_out=${Date.now()}`);
 }
 
 async function doSignOut() {
@@ -607,16 +610,9 @@ async function doSignOut() {
     return;
   }
   await applySession(null);
-  try{
-    Object.keys(localStorage).forEach(key=>{
-      if(key.startsWith('sb-') || key.includes('supabase') || key.includes('vjwpyfveedcidbttdmmn')){
-        localStorage.removeItem(key);
-      }
-    });
-    Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
-  }catch(_){}
+  clearAuthStorage();
   if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
-  window.location.replace('index.html');
+  window.location.replace(`index.html?signed_out=${Date.now()}`);
 }
 
 function togglePass(inputId,btn){
@@ -1117,6 +1113,11 @@ async function applySession(session){
 }
 
 async function initApp(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.has('signed_out')){
+    clearAuthStorage();
+    window.history.replaceState({},'',window.location.pathname);
+  }
   renderMarkets();
   buildTicker();
   await loadPool();
@@ -1137,6 +1138,12 @@ async function initApp(){
 initApp().catch(err=>{
   console.error('initApp failed:', err);
   toast('App failed to initialize','err');
+});
+
+window.addEventListener('pageshow',event=>{
+  if(event.persisted){
+    window.location.reload();
+  }
 });
 </script>
 </body>
