@@ -366,11 +366,19 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
   <div class="tab-panel" id="tab-leaderboard">
     <div class="page-head" style="margin-top:4px">
       <div class="page-title">Leaderboard</div>
-      <div class="page-sub">Ranked by Reddium balance</div>
+      <div class="page-sub">Leaderboard unlocks after official NTA results</div>
     </div>
     <div class="portfolio">
-      <div class="port-head"><div class="port-title">Top Predictors</div><div class="port-meta" id="lb-meta">—</div></div>
-      <div id="lb-body"><div class="loading-state"><div class="spinner"></div>Loading...</div></div>
+      <div class="port-head"><div class="port-title">Top Predictors</div><div class="port-meta" id="lb-meta">Locked</div></div>
+      <div id="lb-body"><div class="empty">// Leaderboard will be released once the official NTA results are out.</div></div>
+    </div>
+    <div class="page-head" style="margin-top:28px">
+      <div class="page-title">Public Bet Feed</div>
+      <div class="page-sub">Every visible prediction placed on the market</div>
+    </div>
+    <div class="portfolio">
+      <div class="port-head"><div class="port-title">Recent Public Bets</div><div class="port-meta" id="public-bets-meta">—</div></div>
+      <div id="public-bets-body"><div class="loading-state"><div class="spinner"></div>Loading...</div></div>
     </div>
   </div>
 </div>
@@ -661,21 +669,9 @@ async function loadUserBets(){
 }
 
 async function loadLeaderboard(){
-  document.getElementById('lb-body').innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
-  const { data: appData, error: appError } = await sb.from('app_leaderboard').select('*');
-  if(!appError && appData){
-    const ranked = [...appData]
-      .sort((a,b)=>Number(b.reddium_balance)-Number(a.reddium_balance) || String(a.username||'').localeCompare(String(b.username||'')))
-      .map((row,index)=>({ ...row, rank:index+1 }));
-    renderLeaderboard(ranked.slice(0,50));
-    return;
-  }
-  const data = await loadLeaderboardFallback();
-  if(!data){
-    document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';
-    return;
-  }
-  renderLeaderboard(data);
+  document.getElementById('lb-meta').textContent='Locked';
+  document.getElementById('lb-body').innerHTML='<div class="empty">// Leaderboard will be released once the official NTA results are out.</div>';
+  await loadPublicBets();
 }
 
 async function loadLeaderboardFallback(){
@@ -718,6 +714,58 @@ async function loadLeaderboardFallback(){
       rank: index+1
     };
   });
+}
+
+async function loadPublicBets(){
+  const body=document.getElementById('public-bets-body');
+  const meta=document.getElementById('public-bets-meta');
+  body.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
+
+  const { data: bets, error } = await sb
+    .from('bets')
+    .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
+    .order('created_at',{ascending:false})
+    .limit(100);
+
+  if(error || !bets){
+    console.error('loadPublicBets failed:', error?.message);
+    body.innerHTML='<div class="empty">// Could not load public bets.</div>';
+    meta.textContent='Unavailable';
+    return;
+  }
+
+  const userIds=[...new Set(bets.map(b=>b.user_id).filter(Boolean))];
+  let profileMap={};
+  if(userIds.length){
+    const { data: profiles } = await sb
+      .from('profiles')
+      .select('id, username')
+      .in('id', userIds);
+    profileMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
+  }
+
+  meta.textContent=`${bets.length} bets`;
+
+  if(!bets.length){
+    body.innerHTML='<div class="empty">// No public bets yet.</div>';
+    return;
+  }
+
+  const rows=bets.map(bet=>{
+    const username=profileMap[bet.user_id] || 'Anonymous';
+    const mine=bet.user_id===currentUser?.id;
+    const market=MNAMES[bet.market_id] || bet.market_id;
+    return `<tr>
+      <td class="lb-name${mine?' you':''}">${username}${mine?'<span class="lb-you-tag">YOU</span>':''}</td>
+      <td class="td-mk">${market}</td>
+      <td><span class="td-pick">${bet.pick}</span></td>
+      <td class="td-stk">${R} ${fmt(bet.stake)}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fO(Number(bet.locked_odds)||1)}</td>
+      <td><span class="status-tag">${bet.status}</span></td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML=`<table class="ptable"><thead><tr><th>User</th><th>Market</th><th>Pick</th><th>Staked</th><th>Locked Odds</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function subscribeRealtime(){
