@@ -248,8 +248,19 @@ grant insert on public.bets to authenticated;
 grant select on public.leaderboard to anon, authenticated;
 grant execute on function public.place_bet(uuid, text, text, integer, numeric, numeric) to authenticated;
 
-alter publication supabase_realtime add table public.pool;
-alter publication supabase_realtime add table public.profiles;
+do $$
+begin
+  alter publication supabase_realtime add table public.pool;
+exception when duplicate_object then
+  null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.profiles;
+exception when duplicate_object then
+  null;
+end $$;
 
 select 'profiles' as table_name, count(*) as row_count from public.profiles
 union all
