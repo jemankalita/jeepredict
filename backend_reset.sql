@@ -225,6 +225,36 @@ exception when others then
 end;
 $$;
 
+create or replace function public.get_pool_snapshot()
+returns table (
+  market_id text,
+  option text,
+  total_staked integer
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.market_id, p.option, p.total_staked
+  from public.pool p
+  order by p.market_id, p.option;
+$$;
+
+create or replace function public.get_my_profile()
+returns table (
+  id uuid,
+  username text,
+  reddium_balance integer
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.id, p.username, p.reddium_balance
+  from public.profiles p
+  where p.id = auth.uid();
+$$;
+
 create or replace view public.leaderboard as
 select
   p.id,
@@ -275,6 +305,8 @@ grant select on public.bets to anon, authenticated;
 grant insert on public.bets to authenticated;
 grant select on public.leaderboard to anon, authenticated;
 grant execute on function public.place_bet(uuid, text, text, integer, numeric, numeric) to authenticated;
+grant execute on function public.get_pool_snapshot() to anon, authenticated;
+grant execute on function public.get_my_profile() to authenticated;
 
 do $$
 begin

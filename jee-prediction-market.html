@@ -660,7 +660,7 @@ function togglePass(inputId,btn){
 async function loadPool(){
   let data=null,error=null;
   for(let attempt=0; attempt<3; attempt++){
-    const result=await sb.from('pool').select('*');
+    const result=await sb.rpc('get_pool_snapshot');
     data=result.data;
     error=result.error;
     if(!error && data) break;
@@ -688,11 +688,12 @@ async function loadPool(){
 
 async function loadUserProfile(){
   if(!currentUser)return;
-  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
-  console.log('loadUserProfile:', data, error?.message);
-  if(data){
-    userProfile=data;
-    saveProfileCache(data);
+  const { data, error } = await sb.rpc('get_my_profile');
+  const profile = Array.isArray(data) ? data[0] : data;
+  console.log('loadUserProfile:', profile, error?.message);
+  if(profile){
+    userProfile=profile;
+    saveProfileCache(profile);
     updateAuthUI();
   }
 }
@@ -1094,15 +1095,12 @@ function setUI(isIn, username, balance) {
 async function ensureProfile(user){
   const fallbackName = user.user_metadata?.username || user.email?.split('@')[0] || 'player';
   const cachedProfile = loadProfileCache(user.id);
-  const { data, error } = await sb
-    .from('profiles')
-    .select('id, username, reddium_balance')
-    .eq('id', user.id)
-    .maybeSingle();
+  const { data, error } = await sb.rpc('get_my_profile');
+  const profile = Array.isArray(data) ? data[0] : data;
 
-  if(data){
-    saveProfileCache(data);
-    return data;
+  if(profile){
+    saveProfileCache(profile);
+    return profile;
   }
 
   if(error){
