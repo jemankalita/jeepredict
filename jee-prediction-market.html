@@ -662,6 +662,14 @@ async function loadUserBets(){
 
 async function loadLeaderboard(){
   document.getElementById('lb-body').innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
+  const { data: appData, error: appError } = await sb.from('app_leaderboard').select('*');
+  if(!appError && appData){
+    const ranked = [...appData]
+      .sort((a,b)=>Number(b.reddium_balance)-Number(a.reddium_balance) || String(a.username||'').localeCompare(String(b.username||'')))
+      .map((row,index)=>({ ...row, rank:index+1 }));
+    renderLeaderboard(ranked.slice(0,50));
+    return;
+  }
   const data = await loadLeaderboardFallback();
   if(!data){
     document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';
