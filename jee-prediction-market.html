@@ -478,7 +478,11 @@ let currentUser=null,userProfile=null,userBets=[],poolData={},selected={},pendin
 
 // ── PARIMUTUEL MATH ───────────────────────────────────
 const poolFor=(id)=>Object.values(poolData[id]||{}).reduce((a,b)=>a+b,0);
-const sideFor=(id,opt)=>(poolData[id]?.[opt])||0;
+const normalizeOption=(opt)=>{
+  const value=String(opt ?? '');
+  return value.includes('S') ? value : value.replace(/[^0-9]+/g,'-').replace(/^-|-$/g,'');
+};
+const sideFor=(id,opt)=>(poolData[id]?.[normalizeOption(opt)])||0;
 const dOdds=(id,opt)=>{const p=poolFor(id),s=sideFor(id,opt);return(p&&s)?p/s:null};
 const lPay=(id,opt,stake)=>{const np=poolFor(id)+stake,ns=sideFor(id,opt)+stake;return(stake/ns)*np};
 const lOdds=(id,opt,stake)=>lPay(id,opt,stake)/stake;
@@ -616,7 +620,7 @@ async function loadPool(){
   poolData={};
   data.forEach(row=>{
     if(!poolData[row.market_id])poolData[row.market_id]={};
-    poolData[row.market_id][row.option]=row.total_staked;
+    poolData[row.market_id][normalizeOption(row.option)]=row.total_staked;
   });
   renderMarkets();buildTicker();updateKPIs();
 }
@@ -721,7 +725,7 @@ function subscribeRealtime(){
 }
 
 // ── BETTING ───────────────────────────────────────────
-function selectOpt(id,opt){selected[id]=opt;renderMarkets();setTimeout(()=>preview(id),10)}
+function selectOpt(id,opt){selected[id]=normalizeOption(opt);renderMarkets();setTimeout(()=>preview(id),10)}
 
 function preview(id){
   const sel=selected[id],inp=document.getElementById(`inp-${id}`),prev=document.getElementById(`prev-${id}`);

@@ -102,6 +102,18 @@ left join public.profiles p on p.id = au.id
 where p.id is null
 on conflict (id) do nothing;
 
+insert into public.pool (market_id, option, total_staked)
+select seed.market_id, seed.option, seed.total_staked
+from (
+  values
+    ('highest','2S1',120),('highest','2S2',100),('highest','4S1',130),('highest','4S2',115),('highest','5S1',150),('highest','5S2',135),('highest','6S1',110),('highest','6S2',95),('highest','7S1',125),('highest','7S2',105),('highest','8S2',90),
+    ('lowest','2S1',95),('lowest','2S2',105),('lowest','4S1',85),('lowest','4S2',100),('lowest','5S1',90),('lowest','5S2',110),('lowest','6S1',130),('lowest','6S2',140),('lowest','7S1',120),('lowest','7S2',115),('lowest','8S2',145),
+    ('hardest','2S1',110),('hardest','2S2',95),('hardest','4S1',120),('hardest','4S2',125),('hardest','5S1',135),('hardest','5S2',140),('hardest','6S1',130),('hardest','6S2',100),('hardest','7S1',90),('hardest','7S2',85),('hardest','8S2',70),
+    ('easiest','2S1',90),('easiest','2S2',105),('easiest','4S1',80),('easiest','4S2',95),('easiest','5S1',75),('easiest','5S2',85),('easiest','6S1',100),('easiest','6S2',120),('easiest','7S1',135),('easiest','7S2',140),('easiest','8S2',150),
+    ('c99','150-155',80),('c99','155-160',95),('c99','160-165',110),('c99','165-170',125),('c99','170-175',140),('c99','175-180',150),('c99','180-185',135),('c99','185-190',115),('c99','190-195',95),('c99','195-200',75)
+) as seed(market_id, option, total_staked)
+on conflict (market_id, option) do nothing;
+
 create or replace function public.place_bet(
   p_user_id uuid,
   p_market_id text,
@@ -169,10 +181,19 @@ begin
   where market_id = p_market_id
     and option = p_pick;
 
+  current_pool := coalesce(current_pool, 0);
+  current_side := coalesce(current_side, 0);
+
   new_pool := current_pool + p_stake;
   new_side := current_side + p_stake;
-  real_payout := (p_stake::numeric / new_side::numeric) * new_pool::numeric;
-  real_odds := real_payout / p_stake::numeric;
+  real_payout := case
+    when new_side <= 0 then p_stake::numeric
+    else (p_stake::numeric / new_side::numeric) * new_pool::numeric
+  end;
+  real_odds := case
+    when p_stake <= 0 then 1::numeric
+    else coalesce(real_payout / p_stake::numeric, 1::numeric)
+  end;
 
   update public.profiles
   set reddium_balance = reddium_balance - p_stake
@@ -184,7 +205,14 @@ begin
   do update set total_staked = public.pool.total_staked + excluded.total_staked;
 
   insert into public.bets (user_id, market_id, pick, stake, locked_odds, locked_payout)
-  values (p_user_id, p_market_id, p_pick, p_stake, real_odds, real_payout);
+  values (
+    p_user_id,
+    p_market_id,
+    p_pick,
+    p_stake,
+    coalesce(real_odds, 1::numeric),
+    coalesce(real_payout, p_stake::numeric)
+  );
 
   return json_build_object(
     'success', true,
