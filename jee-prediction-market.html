@@ -483,6 +483,7 @@ const normalizeOption=(opt)=>{
   return value.includes('S') ? value : value.replace(/[^0-9]+/g,'-').replace(/^-|-$/g,'');
 };
 const sideFor=(id,opt)=>(poolData[id]?.[normalizeOption(opt)])||0;
+const balanceForCurrentUser=()=>currentUser ? Number(userProfile?.reddium_balance ?? 1000) : 0;
 const dOdds=(id,opt)=>{const p=poolFor(id),s=sideFor(id,opt);return(p&&s)?p/s:null};
 const lPay=(id,opt,stake)=>{const np=poolFor(id)+stake,ns=sideFor(id,opt)+stake;return(stake/ns)*np};
 const lOdds=(id,opt,stake)=>lPay(id,opt,stake)/stake;
@@ -574,16 +575,24 @@ async function submitAuth(){
 }
 
 async function signOut(){
-  const { error } = await sb.auth.signOut();
+  const { error } = await sb.auth.signOut({ scope:'local' });
   if(error){toast(error.message,'err');return}
   await applySession(null);
-  window.location.href='jee-prediction-market.html';
+  try{
+    Object.keys(localStorage).forEach(key=>{
+      if(key.startsWith('sb-') || key.includes('supabase') || key.includes('vjwpyfveedcidbttdmmn')){
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
+  }catch(_){}
+  window.location.replace('index.html');
 }
 
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
-  const { error } = await sb.auth.signOut();
+  const { error } = await sb.auth.signOut({ scope:'local' });
   if (error) {
     if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
     toast(error.message, 'err');
@@ -591,11 +600,15 @@ async function doSignOut() {
   }
   await applySession(null);
   try{
-    localStorage.removeItem(`sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`);
-    sessionStorage.clear();
+    Object.keys(localStorage).forEach(key=>{
+      if(key.startsWith('sb-') || key.includes('supabase') || key.includes('vjwpyfveedcidbttdmmn')){
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
   }catch(_){}
   if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
-  window.location.href='jee-prediction-market.html';
+  window.location.replace('index.html');
 }
 
 function togglePass(inputId,btn){
@@ -649,14 +662,8 @@ async function loadUserBets(){
 
 async function loadLeaderboard(){
   document.getElementById('lb-body').innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
-  const { data, error } = await sb.from('leaderboard').select('*').limit(50);
-  if(error || !data){
-    console.error('loadLeaderboard failed:', error?.message);
-    const fallback = await loadLeaderboardFallback();
-    if(fallback){
-      renderLeaderboard(fallback);
-      return;
-    }
+  const data = await loadLeaderboardFallback();
+  if(!data){
     document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';
     return;
   }
@@ -712,7 +719,7 @@ function subscribeRealtime(){
       const row=payload.new;
       if(!row)return;
       if(!poolData[row.market_id])poolData[row.market_id]={};
-      poolData[row.market_id][row.option]=row.total_staked;
+      poolData[row.market_id][normalizeOption(row.option)]=row.total_staked;
       renderMarkets();buildTicker();updateKPIs();
     });
   if(currentUser?.id){
@@ -744,7 +751,7 @@ function openBetModal(id){
   if(!sel)return toast('Select a shift first','err');
   const s=parseInt(document.getElementById(`inp-${id}`)?.value||'0');
   if(!s||s<1)return toast('Enter a valid amount','err');
-  if(s>(userProfile?.reddium_balance||0))return toast('Insufficient Reddium','err');
+  if(s>balanceForCurrentUser())return toast('Insufficient Reddium','err');
   const np=poolFor(id)+s,pay=lPay(id,sel,s),odds=lOdds(id,sel,s);
   pending={id,pick:sel,stake:s,odds,pay};
   document.getElementById('modal-rows').innerHTML=`
