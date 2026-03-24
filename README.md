@@ -1,14 +1,14 @@
 # JEEPredict
 
-> Predict JEE Mains April shifts. Bet Reddium. Win from the loser pool.
+> Predict JEE Mains April 2026 shifts. Bet Reddium. Win from the loser pool.
 
-A prediction market built specifically for **JEE Mains April 2025**. Pick which shift has the highest cutoff, the hardest paper, the lowest cutoff, the easiest paper, or predict the average score range — and earn **Reddium** when you're right.
+A prediction market built specifically for **JEE Mains April 2026**. Pick which shift has the highest cutoff, the hardest paper, the lowest cutoff, the easiest paper, or predict the average score range — and earn **Reddium** when you're right.
 
 ---
 
 ## What is this
 
-JEEPredict is a parimutuel prediction market where users stake virtual currency (Reddium) on outcomes related to JEE Mains April 2025 shifts. All odds are calculated in real-time from actual stakes — no house edge, no fake numbers.
+JEEPredict is a parimutuel prediction market where users stake virtual currency (Reddium) on outcomes related to JEE Mains April 2026 shifts. All odds are calculated in real-time from actual stakes — no house edge, no fake numbers.
 
 ---
 

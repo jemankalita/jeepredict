@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JEEPredict — Markets</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -289,7 +290,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
     <div class="logo-mark">J</div>
     <div class="logo-name">JEE<em>Predict</em></div>
   </a>
-  <div class="header-mid"><span class="hm-dot"></span>April 2025 Session</div>
+  <div class="header-mid"><span class="hm-dot"></span>April 2026 Session</div>
   <div class="header-right">
     <div class="balance-pill" id="balance-pill" style="display:none">
       <div>
@@ -344,7 +345,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 
     <div class="page-head">
       <div class="page-title">Live Markets</div>
-      <div class="page-sub">April 2025 · Resolves on NTA Release</div>
+      <div class="page-sub">April 2026 · Resolves on NTA Release</div>
     </div>
     <div class="markets-grid" id="markets"></div>
   </div>
@@ -571,8 +572,7 @@ async function submitAuth(){
 async function signOut(){
   const { error } = await sb.auth.signOut();
   if(error){toast(error.message,'err');return}
-  currentUser=null;userProfile=null;userBets=[];
-  updateAuthUI();renderPositions();
+  await applySession(null);
   toast('Signed out','ok');
 }
 
@@ -580,12 +580,14 @@ async function doSignOut() {
   const btn = document.getElementById('logout-btn');
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
   const { error } = await sb.auth.signOut();
-  if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
   if (error) {
+    if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
     toast(error.message, 'err');
     return;
   }
-  // onAuthStateChange resets the rest of the UI
+  await applySession(null);
+  if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
+  toast('Signed out','ok');
 }
 
 function togglePass(inputId,btn){
@@ -958,7 +960,7 @@ async function ensureProfile(user){
   if(createError){
     console.error('[Profile create]', createError.message);
     toast('Signed in, but your profile row could not be created. Run the SQL fixes in Supabase.','err');
-    return null;
+    return { id:user.id, username:fallbackName, reddium_balance:1000, profileMissing:true };
   }
 
   return created;
@@ -969,12 +971,12 @@ async function applySession(session){
 
   if(currentUser){
     document.getElementById('auth-overlay')?.classList.remove('open');
-    setUI(true, currentUser.user_metadata?.username || currentUser.email?.split('@')[0], null);
+    setUI(true, currentUser.user_metadata?.username || currentUser.email?.split('@')[0], 1000);
     userProfile = await ensureProfile(currentUser);
     setUI(
       true,
       userProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
-      userProfile?.reddium_balance ?? null
+      userProfile?.reddium_balance ?? 1000
     );
     await loadUserBets();
     subscribeRealtime();
