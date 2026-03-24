@@ -1021,9 +1021,18 @@ function renderMarkets(){
 
 function renderPositions(){
   const el=document.getElementById('positions-body');
-  if(!currentUser){el.innerHTML='<div class="empty">// Sign in to see your positions.</div>';return}
-  if(!userBets.length){el.innerHTML='<div class="empty">// No open positions.<br>Go to Markets and place your first bet.</div>';return}
-  document.getElementById('pos-meta').textContent=`${userBets.length} bet${userBets.length!==1?'s':''}`;
+  const meta=document.getElementById('pos-meta');
+  if(!currentUser){
+    if(meta)meta.textContent='0 bets';
+    el.innerHTML='<div class="empty">// Sign in to see your positions.</div>';
+    return;
+  }
+  if(!userBets.length){
+    if(meta)meta.textContent='0 bets';
+    el.innerHTML='<div class="empty">// No open positions.<br>Go to Markets and place your first bet.</div>';
+    return;
+  }
+  if(meta)meta.textContent=`${userBets.length} bet${userBets.length!==1?'s':''}`;
   const rows=userBets.map(b=>{
     const p=poolFor(b.market_id),side=sideFor(b.market_id,b.pick);
     const livePay=side?(b.stake/side)*p:0,liveOdds=side?livePay/b.stake:0;
@@ -1227,6 +1236,7 @@ async function applySession(session){
   setUI(false, '', null);
   await loadPool();
   renderPositions();
+  loadLeaderboard().catch(err=>console.error('loadLeaderboard failed:', err));
   updateKPIs();
 }
 
