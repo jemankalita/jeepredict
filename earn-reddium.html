@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEEPredict — Earn More Reddium</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#05080C;--base:#090D14;--raised:#121A28;--float:#182231;
+  --rim:rgba(255,255,255,0.08);--rim2:rgba(255,255,255,0.14);
+  --gold:#C9A96E;--gold2:#DFC080;--gold-d:rgba(201,169,110,0.08);
+  --em:#2EBD7E;--text:#EDE8DF;--text2:#9CB0C4;--text3:#506274;
+  --sans:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Cormorant Garamond',serif;
+}
+body{background:
+  radial-gradient(circle at top, rgba(201,169,110,0.08), transparent 30%),
+  linear-gradient(180deg,#070A10 0%,#0A0F17 100%);
+  color:var(--text);font-family:var(--sans);min-height:100vh}
+a{text-decoration:none}
+.shell{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:42px;height:42px;border-radius:10px;background:linear-gradient(145deg,#DFC080,#8A6030);display:grid;place-items:center;color:#05080C;font:600 24px var(--serif)}
+.name{font:600 18px var(--sans);color:var(--text)}
+.name em{font-style:normal;color:var(--gold)}
+.back{font:500 12px var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:12px 18px;border:1px solid var(--rim);border-radius:999px}
+.back:hover{border-color:var(--rim2);color:var(--text)}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:stretch}
+.hero-card,.rule-card,.steps-card{background:rgba(18,26,40,0.92);border:1px solid var(--rim);border-radius:24px}
+.hero-card{padding:38px 34px}
+.eyebrow{font:500 10px var(--mono);letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+.title{font:600 clamp(44px,7vw,82px)/0.9 var(--serif);letter-spacing:-1.5px;margin-bottom:18px}
+.lede{max-width:560px;font-size:18px;line-height:1.8;color:var(--text2)}
+.reward{display:inline-flex;align-items:center;gap:12px;margin-top:30px;padding:14px 18px;border-radius:14px;background:var(--gold-d);border:1px solid rgba(201,169,110,0.22);font:500 13px var(--mono);letter-spacing:1px;color:var(--gold);text-transform:uppercase}
+.reward strong{font-size:22px;letter-spacing:0;color:var(--text)}
+.rule-card{padding:34px 28px;display:flex;flex-direction:column;justify-content:center}
+.rule-title{font:600 30px var(--serif);margin-bottom:16px}
+.rule-copy{font-size:15px;line-height:1.9;color:var(--text2);margin-bottom:18px}
+.tag-row{display:flex;flex-wrap:wrap;gap:10px}
+.tag{padding:10px 12px;border-radius:999px;background:var(--float);border:1px solid var(--rim);font:500 11px var(--mono);letter-spacing:1px;color:var(--text2);text-transform:uppercase}
+.steps-card{margin-top:26px;padding:30px}
+.steps-head{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
+.steps-title{font:600 36px var(--serif)}
+.steps-sub{font:400 12px var(--mono);letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.step{background:var(--float);border:1px solid var(--rim);border-radius:18px;padding:20px 18px}
+.step-no{font:500 10px var(--mono);letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+.step-title{font:600 18px var(--sans);margin-bottom:10px}
+.step-copy{font-size:14px;line-height:1.75;color:var(--text2)}
+.note{margin-top:22px;padding:18px 20px;border-radius:16px;border:1px solid rgba(46,189,126,0.22);background:rgba(46,189,126,0.06);font-size:14px;line-height:1.8;color:#BFE8D2}
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .shell{padding:20px 16px 60px}
+  .topbar{align-items:flex-start;gap:14px;flex-direction:column}
+  .hero-card,.rule-card,.steps-card{border-radius:20px}
+  .hero-card,.rule-card,.steps-card{padding:24px 20px}
+  .title{font-size:42px}
+  .lede{font-size:16px}
+  .steps{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">J</div>
+        <div class="name">JEE<em>Predict</em></div>
+      </div>
+      <a class="back" href="index.html">Back To Home</a>
+    </div>
+
+    <div class="hero">
+      <section class="hero-card">
+        <div class="eyebrow">Community Boost</div>
+        <h1 class="title">Want more<br>Reddium?</h1>
+        <p class="lede">Post your bets on Reddit or X, include your JEEPredict username, and tag the website so people can verify it. If the post is valid, you get a bonus.</p>
+        <div class="reward">Reward <strong>+2,000 R</strong></div>
+      </section>
+
+      <aside class="rule-card">
+        <div class="rule-title">What to include</div>
+        <div class="rule-copy">Your post must clearly show your bet, your JEEPredict username, and either the website link or a tag/mention of JEEPredict. Without all three, the bonus should not be awarded.</div>
+        <div class="tag-row">
+          <span class="tag">Reddit</span>
+          <span class="tag">X / Twitter</span>
+          <span class="tag">Username Required</span>
+          <span class="tag">Tag Or Website Link</span>
+        </div>
+      </aside>
+    </div>
+
+    <section class="steps-card">
+      <div class="steps-head">
+        <div class="steps-title">How to claim it</div>
+        <div class="steps-sub">Simple 4-step flow</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-no">Step 01</div>
+          <div class="step-title">Place a bet</div>
+          <div class="step-copy">Make your prediction inside JEEPredict first so there is a real position attached to your username.</div>
+        </div>
+        <div class="step">
+          <div class="step-no">Step 02</div>
+          <div class="step-title">Post it publicly</div>
+          <div class="step-copy">Share the screenshot or bet details on a JEE-related subreddit on Reddit or on X.</div>
+        </div>
+        <div class="step">
+          <div class="step-no">Step 03</div>
+          <div class="step-title">Include proof</div>
+          <div class="step-copy">Write your JEEPredict username and include the website link or tag JEEPredict in the post.</div>
+        </div>
+        <div class="step">
+          <div class="step-no">Step 04</div>
+          <div class="step-title">Get +2,000 R</div>
+          <div class="step-copy">Once verified, your account should receive a bonus of 2,000 Reddium.</div>
+        </div>
+      </div>
+      <div class="note">Recommended post idea: share your strongest shift call, your username, and ask others to challenge your bet. That is the fastest way to spread market activity.</div>
+    </section>
+  </div>
+</body>
+</html>
