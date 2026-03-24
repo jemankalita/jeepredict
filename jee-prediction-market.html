@@ -493,6 +493,8 @@ const normalizeOption=(opt)=>{
 };
 const sideFor=(id,opt)=>(poolData[id]?.[normalizeOption(opt)])||0;
 const balanceForCurrentUser=()=>currentUser ? Number(userProfile?.reddium_balance ?? 1000) : 0;
+const POOL_CACHE_KEY='jeepredict_pool_cache_v1';
+const PROFILE_CACHE_PREFIX='jeepredict_profile_cache_';
 const dOdds=(id,opt)=>{const p=poolFor(id),s=sideFor(id,opt);return(p&&s)?p/s:null};
 const lPay=(id,opt,stake)=>{const np=poolFor(id)+stake,ns=sideFor(id,opt)+stake;return(stake/ns)*np};
 const lOdds=(id,opt,stake)=>lPay(id,opt,stake)/stake;
@@ -512,6 +514,29 @@ function clearAuthStorage(){
     });
     Object.keys(sessionStorage).forEach(key=>sessionStorage.removeItem(key));
   }catch(_){}
+}
+function savePoolCache(){
+  try{ localStorage.setItem(POOL_CACHE_KEY, JSON.stringify(poolData)); }catch(_){}
+}
+function loadPoolCache(){
+  try{
+    const raw=localStorage.getItem(POOL_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){
+    return null;
+  }
+}
+function saveProfileCache(profile){
+  if(!profile?.id)return;
+  try{ localStorage.setItem(PROFILE_CACHE_PREFIX+profile.id, JSON.stringify(profile)); }catch(_){}
+}
+function loadProfileCache(userId){
+  try{
+    const raw=localStorage.getItem(PROFILE_CACHE_PREFIX+userId);
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){
+    return null;
+  }
 }
 const FORCED_SIGNOUT_KEY='jeepredict_forced_signout';
 function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
@@ -633,9 +658,21 @@ function togglePass(inputId,btn){
 
 // ── DATA ──────────────────────────────────────────────
 async function loadPool(){
-  const { data, error } = await sb.from('pool').select('*');
-  if(error){
-    console.error('loadPool failed:', error.message);
+  let data=null,error=null;
+  for(let attempt=0; attempt<3; attempt++){
+    const result=await sb.from('pool').select('*');
+    data=result.data;
+    error=result.error;
+    if(!error && data) break;
+  }
+  if(error || !data){
+    console.error('loadPool failed:', error?.message);
+    const cached=loadPoolCache();
+    if(cached){
+      poolData=cached;
+      renderMarkets();buildTicker();updateKPIs();
+      return;
+    }
     toast('Could not load pool data','err');
     return;
   }
@@ -645,6 +682,7 @@ async function loadPool(){
     if(!poolData[row.market_id])poolData[row.market_id]={};
     poolData[row.market_id][normalizeOption(row.option)]=row.total_staked;
   });
+  savePoolCache();
   renderMarkets();buildTicker();updateKPIs();
 }
 
@@ -654,6 +692,7 @@ async function loadUserProfile(){
   console.log('loadUserProfile:', data, error?.message);
   if(data){
     userProfile=data;
+    saveProfileCache(data);
     updateAuthUI();
   }
 }
@@ -1054,6 +1093,7 @@ function setUI(isIn, username, balance) {
 
 async function ensureProfile(user){
   const fallbackName = user.user_metadata?.username || user.email?.split('@')[0] || 'player';
+  const cachedProfile = loadProfileCache(user.id);
   const { data, error } = await sb
     .from('profiles')
     .select('id, username, reddium_balance')
@@ -1061,6 +1101,7 @@ async function ensureProfile(user){
     .maybeSingle();
 
   if(data){
+    saveProfileCache(data);
     return data;
   }
 
@@ -1079,10 +1120,14 @@ async function ensureProfile(user){
 
   if(createError){
     console.error('[Profile create]', createError.message);
+    if(cachedProfile){
+      return cachedProfile;
+    }
     toast('Signed in, but your profile row could not be created. Run the SQL fixes in Supabase.','err');
     return { id:user.id, username:fallbackName, reddium_balance:1000, profileMissing:true };
   }
 
+  saveProfileCache(created);
   return created;
 }
 
@@ -1091,7 +1136,12 @@ async function applySession(session){
 
   if(currentUser){
     document.getElementById('auth-overlay')?.classList.remove('open');
-    setUI(true, currentUser.user_metadata?.username || currentUser.email?.split('@')[0], 1000);
+    const cachedProfile = loadProfileCache(currentUser.id);
+    setUI(
+      true,
+      cachedProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      cachedProfile?.reddium_balance ?? 1000
+    );
     userProfile = await ensureProfile(currentUser);
     setUI(
       true,
