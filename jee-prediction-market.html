@@ -565,6 +565,13 @@ function loadAppStateCache(userId){
     return null;
   }
 }
+function clearUserCaches(userId){
+  if(!userId)return;
+  try{
+    localStorage.removeItem(PROFILE_CACHE_PREFIX+userId);
+    localStorage.removeItem(APP_STATE_CACHE_PREFIX+userId);
+  }catch(_){}
+}
 function rowsToPoolMap(rows){
   const mapped={};
   (rows||[]).forEach(row=>{
@@ -689,8 +696,10 @@ async function submitAuth(){
 
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
+  const userId=currentUser?.id;
   try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  clearUserCaches(userId);
   await applySession(null);
   clearAuthStorage();
   sb.auth.signOut({ scope:'local' }).catch(err=>console.warn('[Sign out background]', err?.message||err));
