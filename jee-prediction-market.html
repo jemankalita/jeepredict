@@ -573,7 +573,7 @@ async function signOut(){
   const { error } = await sb.auth.signOut();
   if(error){toast(error.message,'err');return}
   await applySession(null);
-  toast('Signed out','ok');
+  window.location.href='jee-prediction-market.html';
 }
 
 async function doSignOut() {
@@ -586,8 +586,12 @@ async function doSignOut() {
     return;
   }
   await applySession(null);
+  try{
+    localStorage.removeItem(`sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`);
+    sessionStorage.clear();
+  }catch(_){}
   if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
-  toast('Signed out','ok');
+  window.location.href='jee-prediction-market.html';
 }
 
 function togglePass(inputId,btn){
@@ -644,10 +648,57 @@ async function loadLeaderboard(){
   const { data, error } = await sb.from('leaderboard').select('*').limit(50);
   if(error || !data){
     console.error('loadLeaderboard failed:', error?.message);
+    const fallback = await loadLeaderboardFallback();
+    if(fallback){
+      renderLeaderboard(fallback);
+      return;
+    }
     document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';
     return;
   }
   renderLeaderboard(data);
+}
+
+async function loadLeaderboardFallback(){
+  const { data: profiles, error: profilesError } = await sb
+    .from('profiles')
+    .select('id, username, reddium_balance, created_at')
+    .order('reddium_balance',{ascending:false})
+    .limit(50);
+
+  if(profilesError || !profiles){
+    console.error('loadLeaderboardFallback profiles failed:', profilesError?.message);
+    return null;
+  }
+
+  const { data: bets, error: betsError } = await sb
+    .from('bets')
+    .select('user_id, status');
+
+  const stats={};
+  (bets||[]).forEach(bet=>{
+    if(!stats[bet.user_id])stats[bet.user_id]={total_bets:0,wins:0,losses:0};
+    stats[bet.user_id].total_bets+=1;
+    if(bet.status==='won')stats[bet.user_id].wins+=1;
+    if(bet.status==='lost')stats[bet.user_id].losses+=1;
+  });
+
+  if(betsError){
+    console.error('loadLeaderboardFallback bets failed:', betsError.message);
+  }
+
+  return profiles.map((profile,index)=>{
+    const userStats=stats[profile.id]||{total_bets:0,wins:0,losses:0};
+    return {
+      id: profile.id,
+      username: profile.username,
+      reddium_balance: profile.reddium_balance,
+      total_bets: userStats.total_bets,
+      wins: userStats.wins,
+      losses: userStats.losses,
+      rank: index+1
+    };
+  });
 }
 
 function subscribeRealtime(){
