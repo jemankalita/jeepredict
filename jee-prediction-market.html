@@ -1225,8 +1225,8 @@ async function applySession(session){
     realtimeSub = null;
   }
   setUI(false, '', null);
+  await loadPool();
   renderPositions();
-  renderMarkets();
   updateKPIs();
 }
 
