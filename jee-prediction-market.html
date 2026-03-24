@@ -540,6 +540,31 @@ function loadProfileCache(userId){
 }
 const FORCED_SIGNOUT_KEY='jeepredict_forced_signout';
 function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
+const isMissingRpcError=(error)=>String(error?.message||'').includes('Could not find the function');
+
+async function fetchPoolRows(){
+  const rpcResult=await sb.rpc('get_pool_snapshot');
+  if(!rpcResult.error)return rpcResult;
+  if(!isMissingRpcError(rpcResult.error))return rpcResult;
+  console.warn('[Pool RPC missing] Falling back to direct pool select');
+  return sb.from('pool').select('market_id, option, total_staked');
+}
+
+async function fetchMyProfile(){
+  const rpcResult=await sb.rpc('get_my_profile');
+  if(!rpcResult.error){
+    return { data:Array.isArray(rpcResult.data)?rpcResult.data[0]:rpcResult.data, error:null };
+  }
+  if(!isMissingRpcError(rpcResult.error)){
+    return { data:null, error:rpcResult.error };
+  }
+  if(!currentUser?.id){
+    return { data:null, error:rpcResult.error };
+  }
+  console.warn('[Profile RPC missing] Falling back to direct profile select');
+  const directResult=await sb.from('profiles').select('id, username, reddium_balance').eq('id',currentUser.id).maybeSingle();
+  return { data:directResult.data, error:directResult.error };
+}
 
 function openAuth(mode){
   authMode=mode;
@@ -660,7 +685,7 @@ function togglePass(inputId,btn){
 async function loadPool(){
   let data=null,error=null;
   for(let attempt=0; attempt<3; attempt++){
-    const result=await sb.rpc('get_pool_snapshot');
+    const result=await fetchPoolRows();
     data=result.data;
     error=result.error;
     if(!error && data) break;
@@ -688,8 +713,7 @@ async function loadPool(){
 
 async function loadUserProfile(){
   if(!currentUser)return;
-  const { data, error } = await sb.rpc('get_my_profile');
-  const profile = Array.isArray(data) ? data[0] : data;
+  const { data: profile, error } = await fetchMyProfile();
   console.log('loadUserProfile:', profile, error?.message);
   if(profile){
     userProfile=profile;
@@ -1095,8 +1119,7 @@ function setUI(isIn, username, balance) {
 async function ensureProfile(user){
   const fallbackName = user.user_metadata?.username || user.email?.split('@')[0] || 'player';
   const cachedProfile = loadProfileCache(user.id);
-  const { data, error } = await sb.rpc('get_my_profile');
-  const profile = Array.isArray(data) ? data[0] : data;
+  const { data: profile, error } = await fetchMyProfile();
 
   if(profile){
     saveProfileCache(profile);
