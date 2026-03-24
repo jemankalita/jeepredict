@@ -1058,37 +1058,40 @@ if(cc) cc.innerHTML=E('red','72px');
 
 // ─── CURSOR ──────────────────────────────────────────────────
 const dot=document.getElementById('cd'), ring=document.getElementById('cr');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-(function anim(){
-  dot.style.transform=`translate(${mx}px,${my}px)`;
-  rx+=(mx-rx-14)*.12; ry+=(my-ry-14)*.12;
-  ring.style.transform=`translate(${rx}px,${ry}px)`;
-  requestAnimationFrame(anim);
-})();
-document.querySelectorAll('a,button').forEach(el=>{
-  el.addEventListener('mouseenter',()=>ring.style.cssText+='width:44px;height:44px;margin:-22px 0 0 -22px;border-color:rgba(201,169,110,0.6)');
-  el.addEventListener('mouseleave',()=>ring.style.cssText+='width:28px;height:28px;margin:-14px 0 0 -14px;border-color:rgba(201,169,110,0.3)');
-});
+if(dot && ring){
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+  (function anim(){
+    dot.style.transform=`translate(${mx}px,${my}px)`;
+    rx+=(mx-rx-14)*.12; ry+=(my-ry-14)*.12;
+    ring.style.transform=`translate(${rx}px,${ry}px)`;
+    requestAnimationFrame(anim);
+  })();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>ring.style.cssText+='width:44px;height:44px;margin:-22px 0 0 -22px;border-color:rgba(201,169,110,0.6)');
+    el.addEventListener('mouseleave',()=>ring.style.cssText+='width:28px;height:28px;margin:-14px 0 0 -14px;border-color:rgba(201,169,110,0.3)');
+  });
+}
 
 // ─── NAV SCROLL ─────────────────────────────────────────────
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>40));
 
 // ─── VIDEO ──────────────────────────────────────────────────
 const vid=document.getElementById('vid');
-// Video: attempt play, show on any ready signal
-function readyVideo(){
-  if(!vid.classList.contains('ready')){
-    vid.classList.add('ready');
+if(vid){
+  // Video: attempt play, show on any ready signal
+  function readyVideo(){
+    if(!vid.classList.contains('ready')){
+      vid.classList.add('ready');
+    }
   }
+  ['loadeddata','canplay','playing','error'].forEach(ev => vid.addEventListener(ev, readyVideo));
+  vid.play().then(readyVideo).catch(()=>{
+    vid.muted = true;
+    vid.play().then(readyVideo).catch(readyVideo);
+  });
+  if(vid.readyState >= 2) readyVideo();
 }
-['loadeddata','canplay','playing'].forEach(ev => vid.addEventListener(ev, readyVideo));
-vid.play().then(readyVideo).catch(()=>{
-  // Autoplay blocked — still reveal (muted video usually allowed)
-  vid.muted = true;
-  vid.play().then(readyVideo).catch(readyVideo);
-});
-if(vid.readyState >= 2) readyVideo();
 
 // ─── MARQUEE ────────────────────────────────────────────────
 const shifts=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];

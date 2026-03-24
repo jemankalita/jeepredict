@@ -542,14 +542,20 @@ async function submitAuth(){
   const email=fakeEmail(username);
 
   if(authMode==='signup'){
-    const r=await sb.auth.signUp({email,password:pass,options:{data:{username},emailRedirectTo:window.location.href}});
+    const r=await sb.auth.signUp({email,password:pass,options:{data:{username}}});
     btn.disabled=false; btn.textContent='Sign Up';
     if(r.error){
       errEl.textContent=r.error.message.includes('already')?'Username taken — try signing in.':r.error.message;
       return;
     }
-    if(r.data?.user){
-      await sb.from('profiles').upsert({id:r.data.user.id,email,username,reddium_balance:1000},{onConflict:'id'});
+    if(!r.data?.session && r.data?.user){
+      const login=await sb.auth.signInWithPassword({email,password:pass});
+      if(login.error){
+        errEl.textContent=login.error.message.toLowerCase().includes('confirm')
+          ? 'Supabase email confirmation is enabled. Disable it for this username-only flow.'
+          : login.error.message;
+        return;
+      }
     }
     closeAuth();
     toast('Welcome to JEEPredict!','ok');
@@ -563,7 +569,8 @@ async function submitAuth(){
 }
 
 async function signOut(){
-  await sb.auth.signOut();
+  const { error } = await sb.auth.signOut();
+  if(error){toast(error.message,'err');return}
   currentUser=null;userProfile=null;userBets=[];
   updateAuthUI();renderPositions();
   toast('Signed out','ok');
@@ -572,8 +579,13 @@ async function signOut(){
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
-  await sb.auth.signOut();
-  // onAuthStateChange fires and resets everything
+  const { error } = await sb.auth.signOut();
+  if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
+  if (error) {
+    toast(error.message, 'err');
+    return;
+  }
+  // onAuthStateChange resets the rest of the UI
 }
 
 function togglePass(inputId,btn){
@@ -588,7 +600,12 @@ function togglePass(inputId,btn){
 
 // ── DATA ──────────────────────────────────────────────
 async function loadPool(){
-  const{data}=await sb.from('pool').select('*');
+  const { data, error } = await sb.from('pool').select('*');
+  if(error){
+    console.error('loadPool failed:', error.message);
+    toast('Could not load pool data','err');
+    return;
+  }
   if(!data)return;
   poolData={};
   data.forEach(row=>{
@@ -600,7 +617,7 @@ async function loadPool(){
 
 async function loadUserProfile(){
   if(!currentUser)return;
-  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
   console.log('loadUserProfile:', data, error?.message);
   if(data){
     userProfile=data;
@@ -610,32 +627,44 @@ async function loadUserProfile(){
 
 async function loadUserBets(){
   if(!currentUser){userBets=[];renderPositions();return}
-  const{data}=await sb.from('bets').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  const { data, error } = await sb.from('bets').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  if(error){
+    console.error('loadUserBets failed:', error.message);
+    toast('Could not load your bets','err');
+    return;
+  }
   userBets=data||[];
   renderPositions();updateKPIs();
 }
 
 async function loadLeaderboard(){
   document.getElementById('lb-body').innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
-  const{data}=await sb.from('leaderboard').select('*').limit(50);
-  if(!data){document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';return}
+  const { data, error } = await sb.from('leaderboard').select('*').limit(50);
+  if(error || !data){
+    console.error('loadLeaderboard failed:', error?.message);
+    document.getElementById('lb-body').innerHTML='<div class="empty">// Could not load leaderboard.</div>';
+    return;
+  }
   renderLeaderboard(data);
 }
 
 function subscribeRealtime(){
   if(realtimeSub)sb.removeChannel(realtimeSub);
-  realtimeSub=sb.channel('live')
+  let channel=sb.channel(`live-${currentUser?.id||'guest'}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'pool'},payload=>{
       const row=payload.new;
+      if(!row)return;
       if(!poolData[row.market_id])poolData[row.market_id]={};
       poolData[row.market_id][row.option]=row.total_staked;
       renderMarkets();buildTicker();updateKPIs();
-    })
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${currentUser?.id}`},payload=>{
+    });
+  if(currentUser?.id){
+    channel=channel.on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${currentUser.id}`},payload=>{
       if(userProfile)userProfile.reddium_balance=payload.new.reddium_balance;
       updateAuthUI();updateKPIs();
-    })
-    .subscribe();
+    });
+  }
+  realtimeSub=channel.subscribe();
 }
 
 // ── BETTING ───────────────────────────────────────────
@@ -877,46 +906,7 @@ function toast(msg,type='ok'){
 
 sb.auth.onAuthStateChange(async(event, session) => {
   console.log('[Auth]', event, session?.user?.email || 'none');
-  currentUser = session?.user || null;
-
-  if (currentUser) {
-    // 1. Immediately show logged-in chrome
-    document.getElementById('auth-overlay')?.classList.remove('open');
-    setUI(true, currentUser.user_metadata?.username || currentUser.email.split('@')[0], null);
-
-    // 2. Fetch profile
-    const { data, error } = await sb
-      .from('profiles')
-      .select('id, username, reddium_balance')
-      .eq('id', currentUser.id)
-      .single();
-
-    console.log('[Profile]', data, error?.message);
-
-    if (data) {
-      userProfile = data;
-      setUI(true, data.username, Number(data.reddium_balance));
-    } else {
-      // Create profile for new user
-      const uname = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-      const { data: created } = await sb
-        .from('profiles')
-        .upsert({ id: currentUser.id, email: currentUser.email, username: uname, reddium_balance: 1000 }, { onConflict: 'id' })
-        .select()
-        .single();
-      if (created) { userProfile = created; setUI(true, uname, 1000); }
-    }
-
-    await loadUserBets();
-    subscribeRealtime();
-    updateKPIs();
-
-  } else {
-    userProfile = null; userBets = [];
-    if (realtimeSub) { sb.removeChannel(realtimeSub); realtimeSub = null; }
-    setUI(false, '', null);
-    renderPositions();
-  }
+  await applySession(session);
 });
 
 function setUI(isIn, username, balance) {
@@ -940,11 +930,94 @@ function setUI(isIn, username, balance) {
     : (isIn ? '…<span class="unit">R</span>' : '—');
 }
 
-(async()=>{
-  await loadPool();
-  buildTicker();
+async function ensureProfile(user){
+  const fallbackName = user.user_metadata?.username || user.email?.split('@')[0] || 'player';
+  const { data, error } = await sb
+    .from('profiles')
+    .select('id, username, reddium_balance')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if(data){
+    return data;
+  }
+
+  if(error){
+    console.error('[Profile lookup]', error.message);
+  }
+
+  const { data: created, error: createError } = await sb
+    .from('profiles')
+    .upsert(
+      { id: user.id, email: user.email, username: fallbackName, reddium_balance: 1000 },
+      { onConflict: 'id' }
+    )
+    .select('id, username, reddium_balance')
+    .maybeSingle();
+
+  if(createError){
+    console.error('[Profile create]', createError.message);
+    toast('Signed in, but your profile row could not be created. Run the SQL fixes in Supabase.','err');
+    return null;
+  }
+
+  return created;
+}
+
+async function applySession(session){
+  currentUser = session?.user || null;
+
+  if(currentUser){
+    document.getElementById('auth-overlay')?.classList.remove('open');
+    setUI(true, currentUser.user_metadata?.username || currentUser.email?.split('@')[0], null);
+    userProfile = await ensureProfile(currentUser);
+    setUI(
+      true,
+      userProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      userProfile?.reddium_balance ?? null
+    );
+    await loadUserBets();
+    subscribeRealtime();
+    updateKPIs();
+    return;
+  }
+
+  userProfile = null;
+  userBets = [];
+  selected = {};
+  pending = null;
+  if(realtimeSub){
+    sb.removeChannel(realtimeSub);
+    realtimeSub = null;
+  }
+  setUI(false, '', null);
+  renderPositions();
   renderMarkets();
-})();
+  updateKPIs();
+}
+
+async function initApp(){
+  renderMarkets();
+  buildTicker();
+  await loadPool();
+
+  if(window.location.protocol === 'file:'){
+    toast('Use a local server instead of file:// for Supabase auth and bets.', 'err');
+  }
+
+  const { data, error } = await sb.auth.getSession();
+  if(error){
+    console.error('[Session]', error.message);
+    toast('Could not restore your session','err');
+    return;
+  }
+  await applySession(data.session);
+}
+
+initApp().catch(err=>{
+  console.error('initApp failed:', err);
+  toast('App failed to initialize','err');
+});
 </script>
 </body>
 </html>
