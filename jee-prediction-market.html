@@ -473,6 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
+const APP_VERSION='20260324b';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -597,7 +598,7 @@ async function signOut(){
   if(error){toast(error.message,'err');return}
   await applySession(null);
   clearAuthStorage();
-  window.location.replace(`index.html?signed_out=${Date.now()}`);
+  window.location.replace(`index.html?signed_out=${Date.now()}&v=${APP_VERSION}`);
 }
 
 async function doSignOut() {
@@ -612,7 +613,7 @@ async function doSignOut() {
   await applySession(null);
   clearAuthStorage();
   if (btn) { btn.textContent = 'Sign Out'; btn.disabled = false; }
-  window.location.replace(`index.html?signed_out=${Date.now()}`);
+  window.location.replace(`index.html?signed_out=${Date.now()}&v=${APP_VERSION}`);
 }
 
 function togglePass(inputId,btn){
@@ -1114,6 +1115,11 @@ async function applySession(session){
 
 async function initApp(){
   const params=new URLSearchParams(window.location.search);
+  if(params.get('v') !== APP_VERSION){
+    params.set('v', APP_VERSION);
+    window.location.replace(`${window.location.pathname}?${params.toString()}`);
+    return;
+  }
   if(params.has('signed_out')){
     clearAuthStorage();
     window.history.replaceState({},'',window.location.pathname);
