@@ -496,6 +496,7 @@ const sideFor=(id,opt)=>(poolData[id]?.[normalizeOption(opt)])||0;
 const balanceForCurrentUser=()=>currentUser ? Number(userProfile?.reddium_balance ?? 1000) : 0;
 const POOL_CACHE_KEY='jeepredict_pool_cache_v1';
 const PROFILE_CACHE_PREFIX='jeepredict_profile_cache_';
+const APP_STATE_CACHE_PREFIX='jeepredict_app_state_';
 const dOdds=(id,opt)=>{const p=poolFor(id),s=sideFor(id,opt);return(p&&s)?p/s:null};
 const lPay=(id,opt,stake)=>{const np=poolFor(id)+stake,ns=sideFor(id,opt)+stake;return(stake/ns)*np};
 const lOdds=(id,opt,stake)=>lPay(id,opt,stake)/stake;
@@ -534,6 +535,24 @@ function saveProfileCache(profile){
 function loadProfileCache(userId){
   try{
     const raw=localStorage.getItem(PROFILE_CACHE_PREFIX+userId);
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){
+    return null;
+  }
+}
+function saveAppStateCache(userId){
+  if(!userId)return;
+  try{
+    localStorage.setItem(APP_STATE_CACHE_PREFIX+userId, JSON.stringify({
+      poolData,
+      userProfile,
+      userBets
+    }));
+  }catch(_){}
+}
+function loadAppStateCache(userId){
+  try{
+    const raw=localStorage.getItem(APP_STATE_CACHE_PREFIX+userId);
     return raw ? JSON.parse(raw) : null;
   }catch(_){
     return null;
@@ -698,6 +717,7 @@ async function loadPool(){
     poolData[row.market_id][normalizeOption(row.option)]=row.total_staked;
   });
   savePoolCache();
+  if(currentUser?.id)saveAppStateCache(currentUser.id);
   renderMarkets();buildTicker();updateKPIs();
 }
 
@@ -709,6 +729,7 @@ async function loadUserProfile(){
   if(profile){
     userProfile=profile;
     saveProfileCache(profile);
+    saveAppStateCache(currentUser.id);
     updateAuthUI();
     return;
   }
@@ -727,6 +748,7 @@ async function loadUserBets(){
     return;
   }
   userBets=data||[];
+  saveAppStateCache(currentUser.id);
   renderPositions();updateKPIs();
 }
 
@@ -843,6 +865,8 @@ function subscribeRealtime(){
   if(currentUser?.id){
     channel=channel.on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${currentUser.id}`},payload=>{
       if(userProfile)userProfile.reddium_balance=payload.new.reddium_balance;
+      saveProfileCache(userProfile);
+      saveAppStateCache(currentUser.id);
       updateAuthUI();updateKPIs();
     });
   }
@@ -1158,10 +1182,23 @@ async function applySession(session){
   if(currentUser){
     document.getElementById('auth-overlay')?.classList.remove('open');
     const cachedProfile = loadProfileCache(currentUser.id);
+    const cachedState = loadAppStateCache(currentUser.id);
+    if(cachedState?.poolData && Object.keys(cachedState.poolData).length){
+      poolData=cachedState.poolData;
+      renderMarkets();
+      buildTicker();
+    }
+    if(cachedState?.userBets){
+      userBets=cachedState.userBets;
+      renderPositions();
+    }
+    if(cachedState?.userProfile && !cachedProfile){
+      userProfile=cachedState.userProfile;
+    }
     setUI(
       true,
-      cachedProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
-      cachedProfile?.reddium_balance ?? 1000
+      cachedProfile?.username || cachedState?.userProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      cachedProfile?.reddium_balance ?? cachedState?.userProfile?.reddium_balance ?? 1000
     );
     userProfile = await ensureProfile(currentUser);
     setUI(
@@ -1172,6 +1209,7 @@ async function applySession(session){
     await loadPool();
     await loadUserProfile();
     await loadUserBets();
+    saveAppStateCache(currentUser.id);
     subscribeRealtime();
     updateKPIs();
     return;
