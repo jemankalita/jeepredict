@@ -774,7 +774,7 @@ async function loadUserBets(){
 
 async function loadLeaderboard(){
   document.getElementById('lb-meta').textContent='Locked';
-  document.getElementById('lb-body').innerHTML='<div class="empty">// Leaderboard will be released once the official NTA results are out.</div>';
+  document.getElementById('lb-body').innerHTML='<div class="empty">// Leaderboard will be released once the official NTA results are out.<br>It will also be posted across JEE-related subreddits on Reddit.</div>';
   await loadPublicBets();
 }
 
@@ -1200,6 +1200,7 @@ async function applySession(session){
       cachedProfile?.username || cachedState?.userProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
       cachedProfile?.reddium_balance ?? cachedState?.userProfile?.reddium_balance ?? 1000
     );
+    updateKPIs();
     userProfile = await ensureProfile(currentUser);
     setUI(
       true,
