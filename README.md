@@ -10,9 +10,9 @@ JEEPredict is a lightweight prediction market for JEE Main April 2026. Users pla
 
 No real money is involved.
 
-Hosted version:
+## Live Site
 
-`https://jeepredict.vercel.app/`
+[https://jeepredict.vercel.app/](https://jeepredict.vercel.app/)
 
 ## How the website works
 
