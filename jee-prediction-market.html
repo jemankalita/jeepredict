@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405d';
+const APP_VERSION='20260405e';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -774,7 +774,10 @@ async function doSignOut() {
   if(signOutInFlight)return;
   signOutInFlight=true;
   try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
-  if (btn) { btn.textContent='...'; btn.disabled = true; }
+  if(btn){
+    btn.textContent='Signing out...';
+    btn.disabled=true;
+  }
   try{
     const { error } = await sb.auth.signOut({ scope:'global' });
     if(error){
@@ -793,7 +796,7 @@ async function doSignOut() {
     toast('Sign out failed. Please try again.','err');
   }finally{
     signOutInFlight=false;
-    if(btn){
+    if(btn && currentUser){
       btn.textContent='Sign Out';
       btn.disabled=false;
     }
