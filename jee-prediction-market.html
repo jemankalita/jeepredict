@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260324b';
+const APP_VERSION='20260405a';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -522,20 +522,6 @@ const logApp=(scope,message,extra)=>{
   }
   console.log(`[${scope}] ${message}`);
 };
-async function withTimeout(promise,label,ms=8000){
-  let timerId;
-  try{
-    return await Promise.race([
-      promise,
-      new Promise((_,reject)=>{
-        timerId=setTimeout(()=>reject(new Error(`${label} timed out`)),ms);
-      })
-    ]);
-  } finally {
-    clearTimeout(timerId);
-  }
-}
-
 function clearAuthStorage(){
   try{
     Object.keys(localStorage).forEach(key=>{
@@ -864,10 +850,7 @@ async function loadLeaderboard(){
 
   try{
     let rows=null;
-    const { data, error } = await withTimeout(
-      fetchLeaderboardRows(50),
-      'leaderboard view'
-    );
+    const { data, error } = await fetchLeaderboardRows(50);
 
     if(error){
       console.error('[Leaderboard] view query failed:', error.message);
@@ -899,26 +882,20 @@ async function loadLeaderboard(){
 
 async function loadLeaderboardFallback(){
   try{
-    const { data: profiles, error: profilesError } = await withTimeout(
-      sb
-        .from('profiles')
-        .select('id, username, reddium_balance, created_at')
-        .order('reddium_balance',{ascending:false})
-        .limit(50),
-      'leaderboard profiles'
-    );
+    const { data: profiles, error: profilesError } = await sb
+      .from('profiles')
+      .select('id, username, reddium_balance, created_at')
+      .order('reddium_balance',{ascending:false})
+      .limit(50);
 
     if(profilesError || !profiles){
       console.error('loadLeaderboardFallback profiles failed:', profilesError?.message);
       return null;
     }
 
-    const { data: bets, error: betsError } = await withTimeout(
-      sb
-        .from('bets')
-        .select('user_id, status'),
-      'leaderboard bets'
-    );
+    const { data: bets, error: betsError } = await sb
+      .from('bets')
+      .select('user_id, status');
 
     const stats={};
     (bets||[]).forEach(bet=>{
@@ -957,10 +934,7 @@ async function loadPublicBets(){
   body.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
 
   try{
-    const { data: bets, error } = await withTimeout(
-      fetchPublicBetsFeed(100),
-      'public bets'
-    );
+    const { data: bets, error } = await fetchPublicBetsFeed(100);
 
     if(error || !bets){
       console.error('loadPublicBets failed:', error?.message);
