@@ -492,6 +492,7 @@ const DEFAULT_POOL_ROWS=[
 
 let currentUser=null,userProfile=null,userBets=[],poolData={},selected={},pending=null,authMode='login',realtimeSub=null;
 let poolLoadSeq=0;
+let signOutInFlight=false;
 
 // ── PARIMUTUEL MATH ───────────────────────────────────
 const poolFor=(id)=>Object.values(poolData[id]||{}).reduce((a,b)=>a+b,0);
@@ -514,6 +515,14 @@ const fO=x=>x?x.toFixed(2)+'×':'—';
 const fP=p=>p?p.toFixed(1)+'%':'—';
 
 // ── AUTH ──────────────────────────────────────────────
+const logApp=(scope,message,extra)=>{
+  if(extra!==undefined){
+    console.log(`[${scope}] ${message}`, extra);
+    return;
+  }
+  console.log(`[${scope}] ${message}`);
+};
+
 function clearAuthStorage(){
   try{
     Object.keys(localStorage).forEach(key=>{
@@ -697,13 +706,33 @@ async function submitAuth(){
 async function doSignOut() {
   const btn = document.getElementById('logout-btn');
   const userId=currentUser?.id;
+  if(signOutInFlight)return;
+  signOutInFlight=true;
   try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
-  clearUserCaches(userId);
-  await applySession(null);
-  clearAuthStorage();
-  sb.auth.signOut({ scope:'local' }).catch(err=>console.warn('[Sign out background]', err?.message||err));
-  window.location.replace(`index.html?signed_out=${Date.now()}&v=${APP_VERSION}`);
+  try{
+    const { error } = await sb.auth.signOut({ scope:'global' });
+    if(error){
+      console.error('[Auth] Sign out failed:', error.message);
+      toast('Sign out failed. Please try again.','err');
+      return;
+    }
+
+    clearUserCaches(userId);
+    clearAuthStorage();
+    await applySession(null);
+    logApp('Auth','Signed out successfully');
+    toast('Signed out','ok');
+  }catch(err){
+    console.error('[Auth] Sign out threw:', err?.message || err);
+    toast('Sign out failed. Please try again.','err');
+  }finally{
+    signOutInFlight=false;
+    if(btn){
+      btn.textContent='Sign Out';
+      btn.disabled=false;
+    }
+  }
 }
 
 function togglePass(inputId,btn){
@@ -720,6 +749,7 @@ function togglePass(inputId,btn){
 async function loadPool(){
   const seq=++poolLoadSeq;
   let data=null,error=null;
+  const cached=loadPoolCache();
   for(let attempt=0; attempt<3; attempt++){
     const result=await fetchPoolRows();
     data=result.data;
@@ -730,13 +760,14 @@ async function loadPool(){
     return;
   }
   if(error || !Array.isArray(data) || data.length===0){
-    console.error('loadPool failed:', error?.message);
-    const cached=loadPoolCache();
+    console.error('[Pool] loadPool failed:', error?.message || 'empty pool response');
     if(cached){
+      logApp('Pool','Using cached pool snapshot after failed fetch');
       poolData=cached;
       renderMarkets();buildTicker();updateKPIs();
       return;
     }
+    logApp('Pool','Using built-in default pool snapshot');
     poolData=defaultPoolSnapshot();
     savePoolCache();
     if(currentUser?.id)saveAppStateCache(currentUser.id);
@@ -745,6 +776,7 @@ async function loadPool(){
   }
   if(!data)return;
   poolData=rowsToPoolMap(data);
+  logApp('Pool',`Loaded ${data.length} pool rows`);
   savePoolCache();
   if(currentUser?.id)saveAppStateCache(currentUser.id);
   renderMarkets();buildTicker();updateKPIs();
@@ -782,8 +814,37 @@ async function loadUserBets(){
 }
 
 async function loadLeaderboard(){
-  document.getElementById('lb-meta').textContent='Locked';
-  document.getElementById('lb-body').innerHTML='<div class="empty">// Leaderboard will be released once the official NTA results are out.<br>It will also be posted across JEE-related subreddits on Reddit.</div>';
+  const meta=document.getElementById('lb-meta');
+  const body=document.getElementById('lb-body');
+  if(meta)meta.textContent='Loading...';
+  if(body)body.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading leaderboard...</div>';
+
+  let rows=null;
+  const { data, error } = await sb
+    .from('leaderboard')
+    .select('id, username, reddium_balance, total_bets, wins, losses, rank')
+    .order('rank',{ascending:true})
+    .limit(50);
+
+  if(error){
+    console.error('[Leaderboard] view query failed:', error.message);
+  }else{
+    rows=data||[];
+  }
+
+  if(!rows){
+    rows=await loadLeaderboardFallback();
+  }
+
+  if(!rows){
+    if(meta)meta.textContent='Unavailable';
+    if(body)body.innerHTML='<div class="empty">// Could not load leaderboard right now.</div>';
+    await loadPublicBets();
+    return;
+  }
+
+  logApp('Leaderboard',`Loaded ${rows.length} leaderboard rows`);
+  renderLeaderboard(rows);
   await loadPublicBets();
 }
 
@@ -1149,7 +1210,10 @@ function toast(msg,type='ok'){
 
 
 sb.auth.onAuthStateChange(async(event, session) => {
-  console.log('[Auth]', event, session?.user?.email || 'none');
+  logApp('Auth',`${event} ${session?.user?.email || 'none'}`);
+  if(signOutInFlight && event==='SIGNED_OUT'){
+    return;
+  }
   await applySession(session);
 });
 
@@ -1198,6 +1262,7 @@ async function applySession(session){
   currentUser = session?.user || null;
 
   if(currentUser){
+    try{ localStorage.removeItem(FORCED_SIGNOUT_KEY); }catch(_){}
     document.getElementById('auth-overlay')?.classList.remove('open');
     const cachedProfile = loadProfileCache(currentUser.id);
     const cachedState = loadAppStateCache(currentUser.id);
@@ -1236,6 +1301,7 @@ async function applySession(session){
 
   userProfile = null;
   userBets = [];
+  poolData = loadPoolCache() || defaultPoolSnapshot();
   selected = {};
   pending = null;
   if(realtimeSub){
@@ -1277,6 +1343,10 @@ async function initApp(){
     return;
   }
   if(forceSignedOut){
+    const signOutResult=await sb.auth.signOut({ scope:'global' });
+    if(signOutResult.error){
+      console.warn('[Auth] Forced sign-out cleanup failed:', signOutResult.error.message);
+    }
     await applySession(null);
     return;
   }
