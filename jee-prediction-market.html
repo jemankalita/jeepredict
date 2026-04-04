@@ -1229,15 +1229,30 @@ async function confirmBet(){
   if(error||!data?.success){toast(data?.error||error?.message||'Bet failed','err');return}
   if(!poolData[id])poolData[id]={};
   poolData[id][pick]=(poolData[id][pick]||0)+stake;
-  if(userProfile)userProfile.reddium_balance=data.new_balance;
+  if(userProfile){
+    userProfile.reddium_balance = data?.new_balance != null
+      ? data.new_balance
+      : Math.max(0, Number(userProfile.reddium_balance || 0) - stake);
+  }
+  userBets=[{
+    id:data?.bet_id || `local-${Date.now()}`,
+    user_id:currentUser.id,
+    market_id:id,
+    pick,
+    stake,
+    locked_odds:odds,
+    locked_payout:pay,
+    status:'open',
+    created_at:new Date().toISOString()
+  }, ...userBets];
   const inp=document.getElementById(`inp-${id}`);if(inp)inp.value='';
   selected[id]=null;
   closeBetModal();
-  await loadPool();
-  await loadUserProfile();
-  await loadUserBets();
-  renderMarkets();buildTicker();updateAuthUI();updateKPIs();
+  renderMarkets();buildTicker();updateAuthUI();updateKPIs();renderPositions();
   if(currentUser?.id)saveAppStateCache(currentUser.id);
+  loadPool().catch(err=>console.error('post-bet loadPool failed:', err));
+  loadUserProfile().catch(err=>console.error('post-bet loadUserProfile failed:', err));
+  loadUserBets().catch(err=>console.error('post-bet loadUserBets failed:', err));
   toast(`Bet placed — ${R} ${fmt(stake)} on ${pick} @ ${fO(odds)}`,'ok');
 }
 
