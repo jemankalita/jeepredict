@@ -1233,8 +1233,11 @@ async function confirmBet(){
   const inp=document.getElementById(`inp-${id}`);if(inp)inp.value='';
   selected[id]=null;
   closeBetModal();
+  await loadPool();
+  await loadUserProfile();
   await loadUserBets();
-  renderMarkets();updateAuthUI();updateKPIs();
+  renderMarkets();buildTicker();updateAuthUI();updateKPIs();
+  if(currentUser?.id)saveAppStateCache(currentUser.id);
   toast(`Bet placed — ${R} ${fmt(stake)} on ${pick} @ ${fO(odds)}`,'ok');
 }
 
