@@ -353,10 +353,10 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 </header>
 
 <div class="tabs">
-  <a class="tab tab-link" data-page="markets" href="jee-prediction-market.html?v=20260405g">Markets</a>
-  <div class="tab" id="positions-tab" onclick="switchTab('positions',this)">My Positions</div>
-  <a class="tab tab-link" data-page="leaderboard" href="leaderboard.html?v=20260405g">Leaderboard</a>
-  <a class="tab tab-link" data-page="public-bets" href="public-bets.html?v=20260405g">Public Bets</a>
+  <a class="tab tab-link" data-page="markets" href="jee-prediction-market.html?v=20260405h">Markets</a>
+  <a class="tab tab-link" id="positions-tab" data-page="positions" href="jee-prediction-market.html?tab=positions&v=20260405h">My Positions</a>
+  <a class="tab tab-link" data-page="leaderboard" href="leaderboard.html?v=20260405h">Leaderboard</a>
+  <a class="tab tab-link" data-page="public-bets" href="public-bets.html?v=20260405h">Public Bets</a>
 </div>
 
 <div class="pari-bar">
@@ -523,12 +523,13 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405g';
+const APP_VERSION='20260405h';
+const PAGE_QUERY = new URLSearchParams(window.location.search).get('tab');
 const PAGE_MODE = window.location.pathname.toLowerCase().endsWith('leaderboard.html')
   ? 'leaderboard'
   : window.location.pathname.toLowerCase().endsWith('public-bets.html')
     ? 'public-bets'
-    : 'markets';
+    : (PAGE_QUERY === 'positions' ? 'positions' : 'markets');
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -1370,25 +1371,16 @@ function switchTab(name,el){
 }
 
 function applyPageMode(){
-  const positionsTab = document.getElementById('positions-tab');
   document.querySelectorAll('.tab[data-page]').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.page === PAGE_MODE);
   });
 
-  if(PAGE_MODE !== 'markets'){
-    if(positionsTab) positionsTab.style.display = 'none';
-    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-    document.getElementById(`tab-${PAGE_MODE}`)?.classList.add('active');
-    if(PAGE_MODE === 'leaderboard') loadLeaderboard();
-    if(PAGE_MODE === 'public-bets') loadPublicBets();
-    return;
-  }
-
-  if(positionsTab) positionsTab.style.display = '';
-  const marketsTab = document.querySelector('.tab[data-page="markets"]');
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-markets')?.classList.add('active');
-  if(marketsTab) marketsTab.classList.add('active');
+  document.getElementById(`tab-${PAGE_MODE}`)?.classList.add('active');
+
+  if(PAGE_MODE === 'leaderboard') loadLeaderboard();
+  if(PAGE_MODE === 'public-bets') loadPublicBets();
+  if(PAGE_MODE === 'positions') renderPositions();
 }
 
 function toast(msg,type='ok'){
