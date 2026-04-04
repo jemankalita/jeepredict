@@ -542,16 +542,21 @@ footer{
   background:var(--base);
   border-top:1px solid var(--rim);
   padding:36px 52px;
-  display:flex;align-items:center;justify-content:space-between;
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  gap:24px;
 }
 .footer-brand{
   font-family:var(--serif);font-size:15px;font-weight:500;
-  font-style:italic;color:var(--text2);
+  font-style:italic;color:var(--text);
 }
 .footer-brand em{font-style:normal;color:var(--gold)}
-.footer-note{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase}
-.footer-links{display:flex;gap:28px;list-style:none}
-.footer-links a{font-family:var(--mono);font-size:10px;color:var(--text3);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
+.footer-note{
+  font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;
+  justify-self:center;text-align:center;white-space:nowrap;
+}
+.footer-links{display:flex;justify-content:flex-end;gap:28px;list-style:none}
+.footer-links a{font-family:var(--mono);font-size:10px;color:var(--text2);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
 .footer-links a:hover{color:var(--text2)}
 
 /* ── REVEAL ── */
@@ -594,8 +599,9 @@ footer{
   .how-grid{gap:32px}
   .step{grid-template-columns:48px 1fr;gap:16px;padding:20px 0}
   .formula-card{padding:20px}
-  footer{flex-direction:column;gap:16px;text-align:center;padding:28px 20px}
-  .footer-links{justify-content:center}
+  footer{grid-template-columns:1fr;gap:16px;text-align:center;padding:28px 20px}
+  .footer-note{justify-self:center;white-space:normal}
+  .footer-links{justify-content:center;flex-wrap:wrap;gap:16px 22px}
   .scroll-cue{display:none}
   .reddium-grid{gap:40px}
   .coin{width:140px;height:140px}
