@@ -522,6 +522,19 @@ const logApp=(scope,message,extra)=>{
   }
   console.log(`[${scope}] ${message}`);
 };
+async function withTimeout(promise,label,ms=8000){
+  let timerId;
+  try{
+    return await Promise.race([
+      promise,
+      new Promise((_,reject)=>{
+        timerId=setTimeout(()=>reject(new Error(`${label} timed out`)),ms);
+      })
+    ]);
+  } finally {
+    clearTimeout(timerId);
+  }
+}
 
 function clearAuthStorage(){
   try{
@@ -819,127 +832,165 @@ async function loadLeaderboard(){
   if(meta)meta.textContent='Loading...';
   if(body)body.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading leaderboard...</div>';
 
-  let rows=null;
-  const { data, error } = await sb
-    .from('leaderboard')
-    .select('id, username, reddium_balance, total_bets, wins, losses, rank')
-    .order('rank',{ascending:true})
-    .limit(50);
+  try{
+    let rows=null;
+    const { data, error } = await withTimeout(
+      sb
+        .from('leaderboard')
+        .select('id, username, reddium_balance, total_bets, wins, losses, rank')
+        .order('rank',{ascending:true})
+        .limit(50),
+      'leaderboard view'
+    );
 
-  if(error){
-    console.error('[Leaderboard] view query failed:', error.message);
-  }else{
-    rows=data||[];
-  }
+    if(error){
+      console.error('[Leaderboard] view query failed:', error.message);
+    }else{
+      rows=data||[];
+    }
 
-  if(!rows){
-    rows=await loadLeaderboardFallback();
-  }
+    if(!rows){
+      rows=await loadLeaderboardFallback();
+    }
 
-  if(!rows){
+    if(!rows){
+      if(meta)meta.textContent='Unavailable';
+      if(body)body.innerHTML='<div class="empty">// Could not load leaderboard right now.</div>';
+      await loadPublicBets();
+      return;
+    }
+
+    logApp('Leaderboard',`Loaded ${rows.length} leaderboard rows`);
+    renderLeaderboard(rows);
+    await loadPublicBets();
+  }catch(err){
+    console.error('[Leaderboard] unexpected failure:', err?.message || err);
     if(meta)meta.textContent='Unavailable';
     if(body)body.innerHTML='<div class="empty">// Could not load leaderboard right now.</div>';
     await loadPublicBets();
-    return;
   }
-
-  logApp('Leaderboard',`Loaded ${rows.length} leaderboard rows`);
-  renderLeaderboard(rows);
-  await loadPublicBets();
 }
 
 async function loadLeaderboardFallback(){
-  const { data: profiles, error: profilesError } = await sb
-    .from('profiles')
-    .select('id, username, reddium_balance, created_at')
-    .order('reddium_balance',{ascending:false})
-    .limit(50);
+  try{
+    const { data: profiles, error: profilesError } = await withTimeout(
+      sb
+        .from('profiles')
+        .select('id, username, reddium_balance, created_at')
+        .order('reddium_balance',{ascending:false})
+        .limit(50),
+      'leaderboard profiles'
+    );
 
-  if(profilesError || !profiles){
-    console.error('loadLeaderboardFallback profiles failed:', profilesError?.message);
+    if(profilesError || !profiles){
+      console.error('loadLeaderboardFallback profiles failed:', profilesError?.message);
+      return null;
+    }
+
+    const { data: bets, error: betsError } = await withTimeout(
+      sb
+        .from('bets')
+        .select('user_id, status'),
+      'leaderboard bets'
+    );
+
+    const stats={};
+    (bets||[]).forEach(bet=>{
+      if(!stats[bet.user_id])stats[bet.user_id]={total_bets:0,wins:0,losses:0};
+      stats[bet.user_id].total_bets+=1;
+      if(bet.status==='won')stats[bet.user_id].wins+=1;
+      if(bet.status==='lost')stats[bet.user_id].losses+=1;
+    });
+
+    if(betsError){
+      console.error('loadLeaderboardFallback bets failed:', betsError.message);
+    }
+
+    return profiles.map((profile,index)=>{
+      const userStats=stats[profile.id]||{total_bets:0,wins:0,losses:0};
+      return {
+        id: profile.id,
+        username: profile.username,
+        reddium_balance: profile.reddium_balance,
+        total_bets: userStats.total_bets,
+        wins: userStats.wins,
+        losses: userStats.losses,
+        rank: index+1
+      };
+    });
+  }catch(err){
+    console.error('[Leaderboard fallback] unexpected failure:', err?.message || err);
     return null;
   }
-
-  const { data: bets, error: betsError } = await sb
-    .from('bets')
-    .select('user_id, status');
-
-  const stats={};
-  (bets||[]).forEach(bet=>{
-    if(!stats[bet.user_id])stats[bet.user_id]={total_bets:0,wins:0,losses:0};
-    stats[bet.user_id].total_bets+=1;
-    if(bet.status==='won')stats[bet.user_id].wins+=1;
-    if(bet.status==='lost')stats[bet.user_id].losses+=1;
-  });
-
-  if(betsError){
-    console.error('loadLeaderboardFallback bets failed:', betsError.message);
-  }
-
-  return profiles.map((profile,index)=>{
-    const userStats=stats[profile.id]||{total_bets:0,wins:0,losses:0};
-    return {
-      id: profile.id,
-      username: profile.username,
-      reddium_balance: profile.reddium_balance,
-      total_bets: userStats.total_bets,
-      wins: userStats.wins,
-      losses: userStats.losses,
-      rank: index+1
-    };
-  });
 }
 
 async function loadPublicBets(){
   const body=document.getElementById('public-bets-body');
   const meta=document.getElementById('public-bets-meta');
+  if(!body || !meta)return;
   body.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading...</div>';
 
-  const { data: bets, error } = await sb
-    .from('bets')
-    .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
-    .order('created_at',{ascending:false})
-    .limit(100);
+  try{
+    const { data: bets, error } = await withTimeout(
+      sb
+        .from('bets')
+        .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
+        .order('created_at',{ascending:false})
+        .limit(100),
+      'public bets'
+    );
 
-  if(error || !bets){
-    console.error('loadPublicBets failed:', error?.message);
+    if(error || !bets){
+      console.error('loadPublicBets failed:', error?.message);
+      body.innerHTML='<div class="empty">// Could not load public bets.</div>';
+      meta.textContent='Unavailable';
+      return;
+    }
+
+    const userIds=[...new Set(bets.map(b=>b.user_id).filter(Boolean))];
+    let profileMap={};
+    if(userIds.length){
+      const { data: profiles, error: profilesError } = await withTimeout(
+        sb
+          .from('profiles')
+          .select('id, username')
+          .in('id', userIds),
+        'public bet profiles'
+      );
+      if(profilesError){
+        console.error('[Public bets] profile lookup failed:', profilesError.message);
+      }else{
+        profileMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
+      }
+    }
+
+    meta.textContent=`${bets.length} bets`;
+
+    if(!bets.length){
+      body.innerHTML='<div class="empty">// No public bets yet.</div>';
+      return;
+    }
+
+    const rows=bets.map(bet=>{
+      const username=profileMap[bet.user_id] || 'Anonymous';
+      const mine=bet.user_id===currentUser?.id;
+      const market=MNAMES[bet.market_id] || bet.market_id;
+      return `<tr>
+        <td class="lb-name${mine?' you':''}">${username}${mine?'<span class="lb-you-tag">YOU</span>':''}</td>
+        <td class="td-mk">${market}</td>
+        <td><span class="td-pick">${bet.pick}</span></td>
+        <td class="td-stk">${R} ${fmt(bet.stake)}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fO(Number(bet.locked_odds)||1)}</td>
+        <td><span class="status-tag">${bet.status}</span></td>
+      </tr>`;
+    }).join('');
+
+    body.innerHTML=`<table class="ptable"><thead><tr><th>User</th><th>Market</th><th>Pick</th><th>Staked</th><th>Locked Odds</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(err){
+    console.error('[Public bets] unexpected failure:', err?.message || err);
     body.innerHTML='<div class="empty">// Could not load public bets.</div>';
     meta.textContent='Unavailable';
-    return;
   }
-
-  const userIds=[...new Set(bets.map(b=>b.user_id).filter(Boolean))];
-  let profileMap={};
-  if(userIds.length){
-    const { data: profiles } = await sb
-      .from('profiles')
-      .select('id, username')
-      .in('id', userIds);
-    profileMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
-  }
-
-  meta.textContent=`${bets.length} bets`;
-
-  if(!bets.length){
-    body.innerHTML='<div class="empty">// No public bets yet.</div>';
-    return;
-  }
-
-  const rows=bets.map(bet=>{
-    const username=profileMap[bet.user_id] || 'Anonymous';
-    const mine=bet.user_id===currentUser?.id;
-    const market=MNAMES[bet.market_id] || bet.market_id;
-    return `<tr>
-      <td class="lb-name${mine?' you':''}">${username}${mine?'<span class="lb-you-tag">YOU</span>':''}</td>
-      <td class="td-mk">${market}</td>
-      <td><span class="td-pick">${bet.pick}</span></td>
-      <td class="td-stk">${R} ${fmt(bet.stake)}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fO(Number(bet.locked_odds)||1)}</td>
-      <td><span class="status-tag">${bet.status}</span></td>
-    </tr>`;
-  }).join('');
-
-  body.innerHTML=`<table class="ptable"><thead><tr><th>User</th><th>Market</th><th>Pick</th><th>Staked</th><th>Locked Odds</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function subscribeRealtime(){
