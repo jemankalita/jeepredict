@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405c';
+const APP_VERSION='20260405d';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -526,14 +526,12 @@ async function callPublicRpc(functionName, body){
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),15000);
   try{
-    const sessionResult=await sb.auth.getSession();
-    const accessToken=sessionResult.data?.session?.access_token || null;
     const response=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`,{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
         'apikey':SUPABASE_ANON,
-        'Authorization':`Bearer ${accessToken || SUPABASE_ANON}`
+        'Authorization':`Bearer ${SUPABASE_ANON}`
       },
       body:JSON.stringify(body || {}),
       signal:controller.signal
