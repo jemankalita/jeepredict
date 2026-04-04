@@ -23,12 +23,34 @@ body{background:
 a{text-decoration:none}
 .shell{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
+.topbar-right{display:flex;align-items:center;gap:12px}
 .brand{display:flex;align-items:center;gap:14px}
 .mark{width:42px;height:42px;border-radius:10px;background:linear-gradient(145deg,#DFC080,#8A6030);display:grid;place-items:center;color:#05080C;font:600 24px var(--serif)}
 .name{font:600 18px var(--sans);color:var(--text)}
 .name em{font-style:normal;color:var(--gold)}
 .back{font:500 12px var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:12px 18px;border:1px solid var(--rim);border-radius:999px}
 .back:hover{border-color:var(--rim2);color:var(--text)}
+.reddit-link{
+  width:42px;height:42px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  color:#FF4500;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease;
+}
+.reddit-link:hover{
+  transform:scale(1.1);
+  border-color:rgba(255,69,0,0.45);
+  background:rgba(255,69,0,0.08);
+  box-shadow:0 0 18px rgba(255,69,0,0.18);
+}
+.reddit-link:focus-visible{
+  outline:none;
+  border-color:rgba(255,69,0,0.55);
+  box-shadow:0 0 0 3px rgba(255,69,0,0.14);
+}
+.reddit-link svg{width:20px;height:20px;display:block}
 .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:stretch}
 .hero-card,.rule-card,.steps-card{background:rgba(18,26,40,0.92);border:1px solid var(--rim);border-radius:24px}
 .hero-card{padding:38px 34px}
@@ -42,6 +64,18 @@ a{text-decoration:none}
 .rule-copy{font-size:15px;line-height:1.9;color:var(--text2);margin-bottom:18px}
 .tag-row{display:flex;flex-wrap:wrap;gap:10px}
 .tag{padding:10px 12px;border-radius:999px;background:var(--float);border:1px solid var(--rim);font:500 11px var(--mono);letter-spacing:1px;color:var(--text2);text-transform:uppercase}
+.community-cta{margin-top:22px;padding:22px;border-radius:18px;background:linear-gradient(180deg, rgba(255,69,0,0.08), rgba(255,255,255,0.02));border:1px solid rgba(255,69,0,0.18)}
+.community-title{font:600 26px var(--serif);margin-bottom:8px}
+.community-copy{font-size:14px;line-height:1.8;color:var(--text2);margin-bottom:16px}
+.community-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:999px;
+  background:#FF4500;color:#fff;border:1px solid rgba(255,255,255,0.08);
+  font:600 12px var(--mono);letter-spacing:1px;text-transform:uppercase;
+  transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;
+}
+.community-btn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 10px 26px rgba(255,69,0,0.24)}
+.community-btn svg{width:18px;height:18px;display:block}
 .steps-card{margin-top:26px;padding:30px}
 .steps-head{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
 .steps-title{font:600 36px var(--serif)}
@@ -59,6 +93,7 @@ a{text-decoration:none}
 @media(max-width:640px){
   .shell{padding:20px 16px 60px}
   .topbar{align-items:flex-start;gap:14px;flex-direction:column}
+  .topbar-right{width:100%;justify-content:space-between}
   .hero-card,.rule-card,.steps-card{border-radius:20px}
   .hero-card,.rule-card,.steps-card{padding:24px 20px}
   .title{font-size:42px}
@@ -74,14 +109,21 @@ a{text-decoration:none}
         <div class="mark">J</div>
         <div class="name">JEE<em>Predict</em></div>
       </div>
-      <a class="back" href="index.html">Back To Home</a>
+      <div class="topbar-right">
+        <a class="reddit-link" href="https://www.reddit.com/r/PredictJEE/" target="_blank" rel="noopener noreferrer" aria-label="Join our Reddit community" title="Join our Reddit community">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <path d="M14.19 15.27c-.64.64-1.81.88-2.19.88-.39 0-1.55-.24-2.2-.88a.55.55 0 1 0-.77.78c.93.92 2.38 1.2 2.97 1.2.58 0 2.03-.28 2.96-1.2a.55.55 0 1 0-.77-.78ZM9.25 12.02a1.08 1.08 0 1 0 0-2.17 1.08 1.08 0 0 0 0 2.17Zm5.58-2.17a1.08 1.08 0 1 0 0 2.17 1.08 1.08 0 0 0 0-2.17Zm7.17 1.6a2.47 2.47 0 0 0-4.21-1.77c-1.64-1.12-3.82-1.84-6.24-1.92l1.05-3.3 2.86.67a1.64 1.64 0 1 0 .27-1.11l-3.2-.75a.55.55 0 0 0-.65.37l-1.2 3.78c-2.55.05-4.86.78-6.57 1.94a2.47 2.47 0 1 0-1.35 4.53c.06 3.4 4.08 6.15 9.17 6.15 5.1 0 9.12-2.75 9.19-6.14A2.47 2.47 0 0 0 22 11.45Z"/>
+          </svg>
+        </a>
+        <a class="back" href="index.html">Back To Home</a>
+      </div>
     </div>
 
     <div class="hero">
       <section class="hero-card">
         <div class="eyebrow">Community Boost</div>
         <h1 class="title">Want more<br>Reddium?</h1>
-        <p class="lede">Post your bets on Reddit or X, include your JEEPredict username, and tag the website so people can verify it. If the post is valid, you get a bonus.</p>
+        <p class="lede">Share your best calls with the community, include your JEEPredict username, and post your prediction where other players can see and challenge it. If the post is valid, you get a bonus.</p>
         <div class="reward">Reward <strong>+2,000 R</strong></div>
       </section>
 
@@ -89,10 +131,19 @@ a{text-decoration:none}
         <div class="rule-title">What to include</div>
         <div class="rule-copy">Your post must clearly show your bet, your JEEPredict username, and either the website link or a tag/mention of JEEPredict. Without all three, the bonus should not be awarded.</div>
         <div class="tag-row">
-          <span class="tag">Reddit</span>
-          <span class="tag">X / Twitter</span>
+          <span class="tag">r/PredictJEE</span>
           <span class="tag">Username Required</span>
           <span class="tag">Tag Or Website Link</span>
+        </div>
+        <div class="community-cta">
+          <div class="community-title">Join our Reddit Community</div>
+          <div class="community-copy">Discuss predictions, strategies, and leaderboard insights</div>
+          <a class="community-btn" href="https://www.reddit.com/r/PredictJEE/" target="_blank" rel="noopener noreferrer" aria-label="Join our Reddit community">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+              <path d="M14.19 15.27c-.64.64-1.81.88-2.19.88-.39 0-1.55-.24-2.2-.88a.55.55 0 1 0-.77.78c.93.92 2.38 1.2 2.97 1.2.58 0 2.03-.28 2.96-1.2a.55.55 0 1 0-.77-.78ZM9.25 12.02a1.08 1.08 0 1 0 0-2.17 1.08 1.08 0 0 0 0 2.17Zm5.58-2.17a1.08 1.08 0 1 0 0 2.17 1.08 1.08 0 0 0 0-2.17Zm7.17 1.6a2.47 2.47 0 0 0-4.21-1.77c-1.64-1.12-3.82-1.84-6.24-1.92l1.05-3.3 2.86.67a1.64 1.64 0 1 0 .27-1.11l-3.2-.75a.55.55 0 0 0-.65.37l-1.2 3.78c-2.55.05-4.86.78-6.57 1.94a2.47 2.47 0 1 0-1.35 4.53c.06 3.4 4.08 6.15 9.17 6.15 5.1 0 9.12-2.75 9.19-6.14A2.47 2.47 0 0 0 22 11.45Z"/>
+            </svg>
+            Join r/PredictJEE
+          </a>
         </div>
       </aside>
     </div>
@@ -111,7 +162,7 @@ a{text-decoration:none}
         <div class="step">
           <div class="step-no">Step 02</div>
           <div class="step-title">Post it publicly</div>
-          <div class="step-copy">Share the screenshot or bet details on a JEE-related subreddit on Reddit or on X.</div>
+          <div class="step-copy">Share the screenshot or bet details in the official community at r/PredictJEE.</div>
         </div>
         <div class="step">
           <div class="step-no">Step 03</div>

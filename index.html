@@ -80,6 +80,28 @@ nav.scrolled{
 .nav-links a:hover{color:var(--text)}
 
 .nav-right{display:flex;align-items:center;gap:14px}
+.reddit-link{
+  width:40px;height:40px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  color:#FF4500;
+  text-decoration:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease,color .22s ease;
+}
+.reddit-link:hover{
+  transform:scale(1.1);
+  border-color:rgba(255,69,0,0.45);
+  background:rgba(255,69,0,0.08);
+  box-shadow:0 0 18px rgba(255,69,0,0.18);
+}
+.reddit-link:focus-visible{
+  outline:none;
+  border-color:rgba(255,69,0,0.55);
+  box-shadow:0 0 0 3px rgba(255,69,0,0.14);
+}
+.reddit-link svg{width:19px;height:19px;display:block}
 .nav-ghost{
   font-family:var(--sans);font-size:13px;font-weight:400;
   color:var(--text2);background:none;border:none;
@@ -548,6 +570,7 @@ footer{
   nav{padding:0 16px;height:56px}
   .nav-links{display:none}
   .nav-right .nav-ghost{display:none}
+  .reddit-link{width:36px;height:36px}
   .nav-cta{font-size:12px;padding:8px 16px}
   .hero-content{padding:0 16px}
   .hero-title{font-size:clamp(52px,14vw,80px);letter-spacing:-2px}
@@ -608,6 +631,11 @@ footer{
     <li><a href="earn-reddium.html">Earn More</a></li>
   </ul>
   <div class="nav-right">
+    <a class="reddit-link" href="https://www.reddit.com/r/PredictJEE/" target="_blank" rel="noopener noreferrer" aria-label="Join our Reddit community" title="Join our Reddit community">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+        <path d="M14.19 15.27c-.64.64-1.81.88-2.19.88-.39 0-1.55-.24-2.2-.88a.55.55 0 1 0-.77.78c.93.92 2.38 1.2 2.97 1.2.58 0 2.03-.28 2.96-1.2a.55.55 0 1 0-.77-.78ZM9.25 12.02a1.08 1.08 0 1 0 0-2.17 1.08 1.08 0 0 0 0 2.17Zm5.58-2.17a1.08 1.08 0 1 0 0 2.17 1.08 1.08 0 0 0 0-2.17Zm7.17 1.6a2.47 2.47 0 0 0-4.21-1.77c-1.64-1.12-3.82-1.84-6.24-1.92l1.05-3.3 2.86.67a1.64 1.64 0 1 0 .27-1.11l-3.2-.75a.55.55 0 0 0-.65.37l-1.2 3.78c-2.55.05-4.86.78-6.57 1.94a2.47 2.47 0 1 0-1.35 4.53c.06 3.4 4.08 6.15 9.17 6.15 5.1 0 9.12-2.75 9.19-6.14A2.47 2.47 0 0 0 22 11.45Z"/>
+      </svg>
+    </a>
     <a href="jee-prediction-market.html?v=20260324b" class="nav-ghost">Sign In</a>
     <a href="jee-prediction-market.html?v=20260324b" class="nav-cta">Open Markets →</a>
   </div>
