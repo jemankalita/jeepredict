@@ -546,7 +546,7 @@ const DEFAULT_POOL_ROWS=[
   ['c99','150-155',900],['c99','155-160',1300],['c99','160-165',2100],['c99','165-170',3400],['c99','170-175',5200],['c99','175-180',6900],['c99','180-185',6100],['c99','185-190',4300],['c99','190-195',2500],['c99','195-200',1200]
 ];
 
-let currentUser=null,userProfile=null,userBets=[],poolData={},selected={},pending=null,authMode='login',realtimeSub=null;
+let currentUser=null,currentSession=null,userProfile=null,userBets=[],poolData={},selected={},pending=null,authMode='login',realtimeSub=null;
 let poolLoadSeq=0;
 let signOutInFlight=false;
 
@@ -599,6 +599,41 @@ async function callPublicRpc(functionName, body){
       return {
         data:null,
         error:{ message: parsed?.message || text || `RPC ${functionName} failed with ${response.status}`, status:response.status }
+      };
+    }
+    return { data:parsed, error:null };
+  }catch(err){
+    return { data:null, error:{ message: err?.name === 'AbortError' ? `${functionName} request timed out` : (err?.message || String(err)) } };
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
+async function callAuthedRpc(functionName, body){
+  const accessToken=currentSession?.access_token;
+  if(!accessToken){
+    return { data:null, error:{ message:'Session expired. Please sign in again.' } };
+  }
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON,
+        'Authorization':`Bearer ${accessToken}`,
+        'Prefer':'return=representation'
+      },
+      body:JSON.stringify(body || {}),
+      signal:controller.signal
+    });
+    const text=await response.text();
+    let parsed=null;
+    try{ parsed=text ? JSON.parse(text) : null; }catch(_){}
+    if(!response.ok){
+      return {
+        data:null,
+        error:{ message: parsed?.message || parsed?.error_description || text || `RPC ${functionName} failed with ${response.status}`, status:response.status }
       };
     }
     return { data:parsed, error:null };
@@ -1184,10 +1219,12 @@ async function confirmBet(){
   const btn=document.getElementById('bet-confirm-btn');
   btn.disabled=true;btn.textContent='Placing bet...';
   const{id,pick,stake,odds,pay}=pending;
-  const{data,error}=await sb.rpc('place_bet',{
+  logApp('Bet','Starting authenticated REST RPC fetch',{ market:id, pick, stake });
+  const{data,error}=await callAuthedRpc('place_bet',{
     p_user_id:currentUser.id,p_market_id:id,p_pick:pick,
     p_stake:stake,p_locked_odds:odds,p_locked_payout:pay
   });
+  logApp('Bet','REST RPC fetch completed',{ error:error?.message || null, success:data?.success ?? null });
   btn.disabled=false;btn.textContent='Place Bet';
   if(error||!data?.success){toast(data?.error||error?.message||'Bet failed','err');return}
   if(!poolData[id])poolData[id]={};
@@ -1453,6 +1490,7 @@ async function ensureProfile(user){
 }
 
 async function applySession(session){
+  currentSession = session || null;
   currentUser = session?.user || null;
 
   if(currentUser){
@@ -1550,6 +1588,7 @@ async function initApp(){
     await applySession(null);
     return;
   }
+  currentSession = data.session || null;
   await applySession(data.session);
   applyPageMode();
 }
