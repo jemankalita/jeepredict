@@ -143,12 +143,12 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 .c-opt:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-2px);box-shadow:0 14px 28px rgba(0,0,0,0.22)}
 .c-opt:focus-visible{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet),0 0 0 4px rgba(114,103,255,0.18)}
 .c-opt.muted{opacity:0.5;filter:saturate(0.78)}
-.c-opt.sel{border-color:#a87dff;background:linear-gradient(180deg, rgba(168,125,255,0.34), rgba(114,103,255,0.16)),radial-gradient(circle at top, rgba(214,202,255,0.18), transparent 58%);box-shadow:0 0 0 1px rgba(168,125,255,0.46),0 18px 36px rgba(88,61,194,0.34),0 0 26px rgba(168,125,255,0.2);transform:translateY(-2px) scale(1.03);animation:selectPulse .28s ease}
-.c-opt.sel:hover{transform:translateY(-2px) scale(1.03)}
-.c-opt.sel .c-range{color:#f5efff}
-.c-opt.sel .c-pct{color:#d9ccff}
-.c-opt.sel .c-stk{color:#ffe2a6}
-.c-opt.sel .c-odds{color:#ccb8ff}
+.c-opt.sel{border-color:var(--violet);background:rgba(114,103,255,0.12);box-shadow:0 0 0 1px rgba(114,103,255,0.28),0 10px 24px rgba(0,0,0,0.22);transform:translateY(-2px) scale(1.01);animation:selectPulse .24s ease}
+.c-opt.sel:hover{transform:translateY(-2px) scale(1.01)}
+.c-opt.sel .c-range{color:var(--text)}
+.c-opt.sel .c-pct{color:var(--text)}
+.c-opt.sel .c-stk{color:var(--gold)}
+.c-opt.sel .c-odds{color:var(--violet)}
 .c-range{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px}
 .c-bar{width:100%;height:2px;background:var(--rim);border-radius:1px;overflow:hidden}
 .c-bar-fill{height:100%;background:var(--violet);border-radius:1px;transition:width .5s}
@@ -156,7 +156,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 .c-stk{font-family:var(--mono);font-size:10px;color:var(--gold)}
 .c-odds{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--violet)}
 .c-none{color:var(--text2);font-weight:400;font-size:9px}
-@keyframes selectPulse{0%{transform:translateY(0) scale(1)}70%{transform:translateY(-2px) scale(1.035)}100%{transform:translateY(-2px) scale(1.03)}}
+@keyframes selectPulse{0%{transform:translateY(0) scale(1)}70%{transform:translateY(-2px) scale(1.015)}100%{transform:translateY(-2px) scale(1.01)}}
 
 .portfolio{background:var(--raised);border:1px solid var(--rim);border-radius:14px;overflow:hidden}
 .port-head{padding:14px 22px;border-bottom:1px solid var(--rim);display:flex;justify-content:space-between;align-items:center;background:var(--float)}
