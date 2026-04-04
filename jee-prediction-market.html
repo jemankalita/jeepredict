@@ -730,7 +730,9 @@ async function fetchPoolRows(){
 }
 
 async function fetchMyProfile(){
-  const rpcResult=await sb.rpc('get_my_profile');
+  logApp('Profile','Starting authenticated REST RPC fetch');
+  const rpcResult=await callAuthedRpc('get_my_profile',{});
+  logApp('Profile','REST RPC fetch completed',{ error: rpcResult.error?.message || null });
   if(!rpcResult.error){
     return { data:Array.isArray(rpcResult.data)?rpcResult.data[0]:rpcResult.data, error:null };
   }
@@ -741,8 +743,14 @@ async function fetchMyProfile(){
     return { data:null, error:rpcResult.error };
   }
   console.warn('[Profile RPC missing] Falling back to direct profile select');
-  const directResult=await sb.from('profiles').select('id, username, reddium_balance').eq('id',currentUser.id).maybeSingle();
-  return { data:directResult.data, error:directResult.error };
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}&select=id,username,reddium_balance`,{
+    headers:{
+      'apikey':SUPABASE_ANON,
+      'Authorization':`Bearer ${currentSession?.access_token || SUPABASE_ANON}`
+    }
+  });
+  const rows=await response.json();
+  return { data:Array.isArray(rows)?(rows[0]||null):rows, error:response.ok?null:{ message:'Could not load profile' } };
 }
 
 async function fetchLeaderboardRows(limit=50){
@@ -964,9 +972,16 @@ async function loadUserProfile(){
 
 async function loadUserBets(){
   if(!currentUser){userBets=[];renderPositions();return}
-  const { data, error } = await sb.from('bets').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-  if(error){
-    console.error('loadUserBets failed:', error.message);
+  logApp('Positions','Starting authenticated REST fetch');
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/bets?user_id=eq.${currentUser.id}&select=*&order=created_at.desc`,{
+    headers:{
+      'apikey':SUPABASE_ANON,
+      'Authorization':`Bearer ${currentSession?.access_token || SUPABASE_ANON}`
+    }
+  });
+  const data=await response.json();
+  if(!response.ok){
+    console.error('loadUserBets failed:', data?.message || 'request failed');
     toast('Could not load your bets','err');
     return;
   }
