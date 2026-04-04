@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405e';
+const APP_VERSION='20260405f';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -629,7 +629,9 @@ function fakeEmail(u){ return u.toLowerCase().trim()+'@jeepredict.app'; }
 const isMissingRpcError=(error)=>String(error?.message||'').includes('Could not find the function');
 
 async function fetchPoolRows(){
-  const rpcResult=await sb.rpc('get_pool_snapshot');
+  logApp('Pool','Starting REST RPC fetch');
+  const rpcResult=await callPublicRpc('get_pool_snapshot',{});
+  logApp('Pool','REST RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
   if(!rpcResult.error)return rpcResult;
   if(!isMissingRpcError(rpcResult.error))return rpcResult;
   console.warn('[Pool RPC missing] Falling back to direct pool select');
@@ -779,11 +781,12 @@ async function doSignOut() {
     btn.disabled=true;
   }
   try{
-    const { error } = await sb.auth.signOut({ scope:'global' });
-    if(error){
-      console.error('[Auth] Sign out failed:', error.message);
-      toast('Sign out failed. Please try again.','err');
-      return;
+    const signOutResult = await Promise.race([
+      sb.auth.signOut({ scope:'global' }),
+      new Promise(resolve=>setTimeout(()=>resolve({ error:{ message:'Sign out timed out' } }), 5000))
+    ]);
+    if(signOutResult?.error){
+      console.warn('[Auth] Sign out fallback:', signOutResult.error.message);
     }
 
     clearUserCaches(userId);
