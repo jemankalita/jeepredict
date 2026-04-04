@@ -106,19 +106,26 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 .mcard-body{padding:14px 22px 18px}
 .opts-col-heads{display:grid;grid-template-columns:40px 1fr 54px 62px 56px;gap:8px;padding:0 10px 8px;font-family:var(--mono);font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px}
 .opts-list{display:flex;flex-direction:column;gap:4px}
-.opt-row{display:grid;grid-template-columns:40px 1fr 54px 62px 56px;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
-.opt-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--fill,0%);background:rgba(255,255,255,0.018);transition:width .5s ease}
-.opt-row:hover{background:var(--float);border-color:rgba(255,255,255,0.07)}
-.opt-row.sel{background:var(--mc-dim,var(--gold-d));border-color:var(--mc-color,var(--gold))}
+.opt-row{display:grid;grid-template-columns:40px 1fr 54px 62px 56px;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease,background .24s ease,opacity .24s ease,filter .24s ease;position:relative;overflow:hidden;background:rgba(255,255,255,0.015);outline:none}
+.opt-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--fill,0%);background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));transition:width .5s ease}
+.opt-row::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);pointer-events:none}
+.opt-row:hover{background:var(--float);border-color:rgba(255,255,255,0.11);transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,0.22)}
+.opt-row:focus-visible{border-color:var(--mc-color,var(--gold));box-shadow:0 0 0 1px var(--mc-color,var(--gold)),0 0 0 4px rgba(107,114,255,0.15)}
+.opt-row.muted{opacity:0.55;filter:saturate(0.78)}
+.opt-row.sel{background:linear-gradient(135deg, var(--mc-dim,var(--gold-d)), rgba(255,255,255,0.04));border-color:var(--mc-color,var(--gold));box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 12px 32px rgba(0,0,0,0.28);transform:translateY(-2px) scale(1.02);z-index:1}
+.opt-row.sel:hover{transform:translateY(-2px) scale(1.02)}
 .opt-row.sel .o-name{color:var(--mc-color,var(--gold))}
-.o-name{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)}
+.o-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
 .bar-wrap{height:3px;background:var(--rim);border-radius:2px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;background:var(--mc-color,var(--gold));transition:width .5s ease}
-.o-pct{font-family:var(--mono);font-size:10px;color:var(--text);text-align:right}
+.o-pct{font-family:var(--mono);font-size:9px;color:var(--text2);text-align:right}
 .o-stk{font-family:var(--mono);font-size:10px;color:var(--gold);text-align:right}
 .o-odds{font-family:var(--mono);font-size:11px;font-weight:600;text-align:right}
 .o-dim{color:var(--text2)!important;font-weight:400!important}
 .o-first{color:var(--em)!important;font-size:9px!important;font-weight:400!important}
+.opt-check{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:999px;background:rgba(7,10,16,0.7);border:1px solid rgba(255,255,255,0.08);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mc-color,var(--gold));opacity:0;transform:translateY(-4px);transition:opacity .24s ease,transform .24s ease}
+.opt-row.sel .opt-check{opacity:1;transform:translateY(0)}
+.opt-check::before{content:'✓';font-size:10px;line-height:1}
 .bet-row{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--rim)}
 .sel-info{flex:1;min-width:0;font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sel-info b{color:var(--mc-color,var(--gold));font-weight:500}
@@ -134,16 +141,24 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
 .preview-line.on{color:var(--em)}
 
 .mcard.wide{grid-column:1/-1}
-.cutoff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
-.c-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;border-radius:8px;border:1px solid transparent;background:var(--float);cursor:pointer;transition:all .15s;text-align:center}
-.c-opt:hover{border-color:rgba(255,255,255,0.08)}.c-opt.sel{border-color:var(--violet);background:var(--violet-d)}
-.c-range{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)}
+.cutoff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px}
+.c-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:124px;padding:14px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));cursor:pointer;transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease,background .24s ease,opacity .24s ease,filter .24s ease;text-align:center;position:relative;outline:none}
+.c-opt:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-2px);box-shadow:0 14px 28px rgba(0,0,0,0.22)}
+.c-opt:focus-visible{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet),0 0 0 4px rgba(114,103,255,0.18)}
+.c-opt.muted{opacity:0.5;filter:saturate(0.78)}
+.c-opt.sel{border-color:var(--violet);background:linear-gradient(180deg, rgba(114,103,255,0.26), rgba(114,103,255,0.12));box-shadow:0 0 0 1px rgba(114,103,255,0.38),0 16px 34px rgba(74,58,199,0.28);transform:translateY(-2px) scale(1.03);animation:selectPulse .28s ease}
+.c-opt.sel:hover{transform:translateY(-2px) scale(1.03)}
+.c-range{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px}
 .c-bar{width:100%;height:2px;background:var(--rim);border-radius:1px;overflow:hidden}
 .c-bar-fill{height:100%;background:var(--violet);border-radius:1px;transition:width .5s}
-.c-pct{font-family:var(--mono);font-size:9px;color:var(--violet)}
+.c-pct{font-family:var(--mono);font-size:9px;color:var(--text2)}
 .c-stk{font-family:var(--mono);font-size:10px;color:var(--gold)}
 .c-odds{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--violet)}
 .c-none{color:var(--text2);font-weight:400;font-size:9px}
+.c-selected{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:rgba(13,16,24,0.78);border:1px solid rgba(114,103,255,0.28);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#c9c3ff;opacity:0;transform:translateY(-4px);transition:opacity .24s ease,transform .24s ease}
+.c-opt.sel .c-selected{opacity:1;transform:translateY(0)}
+.c-selected::before{content:'✓';font-size:10px;line-height:1}
+@keyframes selectPulse{0%{transform:translateY(0) scale(1)}70%{transform:translateY(-2px) scale(1.035)}100%{transform:translateY(-2px) scale(1.03)}}
 
 .portfolio{background:var(--raised);border:1px solid var(--rim);border-radius:14px;overflow:hidden}
 .port-head{padding:14px 22px;border-bottom:1px solid var(--rim);display:flex;justify-content:space-between;align-items:center;background:var(--float)}
@@ -258,8 +273,8 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
   .bet-inp{width:60px}
   .bet-btn{padding:8px 14px;font-size:10px}
   .preview-line{font-size:9px}
-  .cutoff-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:5px}
-  .c-opt{padding:8px 6px}
+  .cutoff-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+  .c-opt{min-height:110px;padding:12px 8px}
   .c-range{font-size:11px}
   .c-odds{font-size:10px}
   .exp-formulas{grid-template-columns:1fr}
@@ -1036,7 +1051,58 @@ function subscribeRealtime(){
 }
 
 // ── BETTING ───────────────────────────────────────────
-function selectOpt(id,opt){selected[id]=normalizeOption(opt);renderMarkets();setTimeout(()=>preview(id),10)}
+function selectOpt(id,opt){
+  const normalized=normalizeOption(opt);
+  selected[id]=selected[id]===normalized?null:normalized;
+  renderMarkets();
+  setTimeout(()=>{
+    preview(id);
+    const active=document.querySelector(`[data-market="${id}"][data-option="${normalized}"]`);
+    if(active && selected[id]===normalized)active.focus();
+  },10);
+}
+
+function focusOption(id,opt){
+  const target=document.querySelector(`[data-market="${id}"][data-option="${normalizeOption(opt)}"]`);
+  if(target)target.focus();
+}
+
+function moveOptionFocus(id,opt,direction){
+  const options=[...document.querySelectorAll(`[data-market="${id}"]`)];
+  if(!options.length)return;
+  const currentIndex=options.findIndex(node=>node.dataset.option===normalizeOption(opt));
+  const safeIndex=currentIndex<0?0:currentIndex;
+  const nextIndex=(safeIndex+direction+options.length)%options.length;
+  options[nextIndex].focus();
+}
+
+function onOptionKeyDown(event,id,opt){
+  switch(event.key){
+    case 'Enter':
+    case ' ':
+      event.preventDefault();
+      selectOpt(id,opt);
+      break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      event.preventDefault();
+      moveOptionFocus(id,opt,1);
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      event.preventDefault();
+      moveOptionFocus(id,opt,-1);
+      break;
+    case 'Escape':
+      if(selected[id]===normalizeOption(opt)){
+        event.preventDefault();
+        selected[id]=null;
+        renderMarkets();
+        setTimeout(()=>focusOption(id,opt),10);
+      }
+      break;
+  }
+}
 
 function preview(id){
   const sel=selected[id],inp=document.getElementById(`inp-${id}`),prev=document.getElementById(`prev-${id}`);
@@ -1104,7 +1170,8 @@ function renderMarkets(){
       const pp=iPct(m.id,s),od=dOdds(m.id,s),sk=sideFor(m.id,s),isSel=sel===s;
       let oL,oC;
       if(!p){oL='first bet';oC='o-first'}else if(!sk){oL='—';oC='o-dim'}else{oL=fO(od);oC=''}
-      return `<div class="opt-row${isSel?' sel':''}" style="--fill:${pp.toFixed(1)}%;--mc-color:${m.color};--mc-dim:${m.dim}" onclick="selectOpt('${m.id}','${s}')">
+      return `<div class="opt-row${isSel?' sel':''}${sel&&!isSel?' muted':''}" style="--fill:${pp.toFixed(1)}%;--mc-color:${m.color};--mc-dim:${m.dim}" onclick="selectOpt('${m.id}','${s}')" onkeydown="onOptionKeyDown(event,'${m.id}','${s}')" role="option" aria-selected="${isSel?'true':'false'}" tabindex="${isSel||!sel?'0':'-1'}" data-market="${m.id}" data-option="${s}">
+        <span class="opt-check">Selected</span>
         <span class="o-name">${s}</span>
         <div class="bar-wrap"><div class="bar-fill" style="width:${pp.toFixed(1)}%;background:${m.color}"></div></div>
         <span class="o-pct${!sk?' o-dim':''}">${sk?fP(pp):'—'}</span>
@@ -1119,7 +1186,7 @@ function renderMarkets(){
       </div>
       <div class="mcard-body">
         <div class="opts-col-heads"><span></span><span>Distribution</span><span style="text-align:right">Share</span><span style="text-align:right">Staked</span><span style="text-align:right">Odds</span></div>
-        <div class="opts-list">${opts}</div>
+      <div class="opts-list" role="listbox" aria-label="${m.name} betting options">${opts}</div>
         <div class="bet-row">
           <div class="sel-info">${sel?`Picked: <b>${sel}</b>`:'<span style="color:var(--text3)">← select a shift</span>'}</div>
           <div class="inp-wrap" style="--mc-color:${m.color}"><span style="font-size:13px">${R}</span><input class="bet-inp" id="inp-${m.id}" type="number" placeholder="Amount" min="1" step="1" oninput="preview('${m.id}')"></div>
@@ -1135,7 +1202,8 @@ function renderMarkets(){
     const pp=iPct('c99',r),od=dOdds('c99',r),sk=sideFor('c99',r),isSel=s99===r;
     const oL=!p99?'first bet':(!sk?'—':fO(od));
     const oC=(!p99||!sk)?'c-none':'';
-    return `<div class="c-opt${isSel?' sel':''}" onclick="selectOpt('c99','${r}')">
+    return `<div class="c-opt${isSel?' sel':''}${s99&&!isSel?' muted':''}" onclick="selectOpt('c99','${r}')" onkeydown="onOptionKeyDown(event,'c99','${r}')" role="option" aria-selected="${isSel?'true':'false'}" tabindex="${isSel||!s99?'0':'-1'}" data-market="c99" data-option="${r}">
+      <span class="c-selected">Selected</span>
       <div class="c-range">${r}</div>
       <div class="c-bar"><div class="c-bar-fill" style="width:${pp.toFixed(1)}%"></div></div>
       <div class="c-pct">${sk?fP(pp):'—'}</div>
@@ -1150,7 +1218,7 @@ function renderMarkets(){
       <div class="mcard-meta"><div class="pool-label">Pool</div><div class="pool-val">${fmt(p99)} R</div><div class="open-badge">Open</div></div>
     </div>
     <div class="mcard-body">
-      <div class="cutoff-grid">${cOpts}</div>
+      <div class="cutoff-grid" role="listbox" aria-label="99 percentile score ranges">${cOpts}</div>
       <div class="bet-row">
         <div class="sel-info">${s99?`Picked: <b style="color:var(--violet)">${s99}</b>`:'<span style="color:var(--text3)">← select a score range</span>'}</div>
         <div class="inp-wrap" style="--mc-color:var(--violet)"><span style="font-size:13px">${R}</span><input class="bet-inp" id="inp-c99" type="number" placeholder="Amount" min="1" step="1" oninput="preview('c99')"></div>
