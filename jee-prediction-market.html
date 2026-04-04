@@ -1196,10 +1196,11 @@ function renderMarkets(){
 
   const p99=poolFor('c99'),s99=selected['c99'];
   const cOpts=C99.map(r=>{
-    const pp=iPct('c99',r),od=dOdds('c99',r),sk=sideFor('c99',r),isSel=s99===r;
+    const normalizedRange=normalizeOption(r);
+    const pp=iPct('c99',r),od=dOdds('c99',r),sk=sideFor('c99',r),isSel=s99===normalizedRange;
     const oL=!p99?'first bet':(!sk?'—':fO(od));
     const oC=(!p99||!sk)?'c-none':'';
-    return `<div class="c-opt${isSel?' sel':''}${s99&&!isSel?' muted':''}" onclick="selectOpt('c99','${r}')" onkeydown="onOptionKeyDown(event,'c99','${r}')" role="option" aria-selected="${isSel?'true':'false'}" tabindex="${isSel||!s99?'0':'-1'}" data-market="c99" data-option="${r}">
+    return `<div class="c-opt${isSel?' sel':''}${s99&&!isSel?' muted':''}" onclick="selectOpt('c99','${r}')" onkeydown="onOptionKeyDown(event,'c99','${r}')" role="option" aria-selected="${isSel?'true':'false'}" tabindex="${isSel||!s99?'0':'-1'}" data-market="c99" data-option="${normalizedRange}">
       <div class="c-range">${r}</div>
       <div class="c-bar"><div class="c-bar-fill" style="width:${pp.toFixed(1)}%"></div></div>
       <div class="c-pct">${sk?fP(pp):'—'}</div>
