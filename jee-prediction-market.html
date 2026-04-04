@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405b';
+const APP_VERSION='20260405c';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -522,6 +522,38 @@ const logApp=(scope,message,extra)=>{
   }
   console.log(`[${scope}] ${message}`);
 };
+async function callPublicRpc(functionName, body){
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),15000);
+  try{
+    const sessionResult=await sb.auth.getSession();
+    const accessToken=sessionResult.data?.session?.access_token || null;
+    const response=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON,
+        'Authorization':`Bearer ${accessToken || SUPABASE_ANON}`
+      },
+      body:JSON.stringify(body || {}),
+      signal:controller.signal
+    });
+    const text=await response.text();
+    let parsed=null;
+    try{ parsed=text ? JSON.parse(text) : null; }catch(_){}
+    if(!response.ok){
+      return {
+        data:null,
+        error:{ message: parsed?.message || text || `RPC ${functionName} failed with ${response.status}`, status:response.status }
+      };
+    }
+    return { data:parsed, error:null };
+  }catch(err){
+    return { data:null, error:{ message: err?.name === 'AbortError' ? `${functionName} request timed out` : (err?.message || String(err)) } };
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
 function clearAuthStorage(){
   try{
     Object.keys(localStorage).forEach(key=>{
@@ -623,9 +655,9 @@ async function fetchMyProfile(){
 }
 
 async function fetchLeaderboardRows(limit=50){
-  logApp('Leaderboard','Starting RPC fetch',{ limit });
-  const rpcResult=await sb.rpc('get_public_leaderboard',{ p_limit: limit });
-  logApp('Leaderboard','RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
+  logApp('Leaderboard','Starting REST RPC fetch',{ limit });
+  const rpcResult=await callPublicRpc('get_public_leaderboard',{ p_limit: limit });
+  logApp('Leaderboard','REST RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
   if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
   if(!isMissingRpcError(rpcResult.error)){
     return { data:null, error:rpcResult.error };
@@ -641,9 +673,9 @@ async function fetchLeaderboardRows(limit=50){
 }
 
 async function fetchPublicBetsFeed(limit=100){
-  logApp('Public bets','Starting RPC fetch',{ limit });
-  const rpcResult=await sb.rpc('get_public_bets_feed',{ p_limit: limit });
-  logApp('Public bets','RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
+  logApp('Public bets','Starting REST RPC fetch',{ limit });
+  const rpcResult=await callPublicRpc('get_public_bets_feed',{ p_limit: limit });
+  logApp('Public bets','REST RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
   if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
   if(!isMissingRpcError(rpcResult.error)){
     return { data:null, error:rpcResult.error };
