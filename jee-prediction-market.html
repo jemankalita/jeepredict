@@ -473,7 +473,7 @@ const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
 const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
-const APP_VERSION='20260405a';
+const APP_VERSION='20260405b';
 const C99=['150–155','155–160','160–165','165–170','170–175','175–180','180–185','185–190','190–195','195–200'];
 const MKTS=[
   {id:'highest',icon:'trophy',name:'Highest Cutoff Shift',desc:'Which shift will have the highest overall cutoff?',color:'var(--gold)',dim:'var(--gold-d)'},
@@ -623,7 +623,9 @@ async function fetchMyProfile(){
 }
 
 async function fetchLeaderboardRows(limit=50){
+  logApp('Leaderboard','Starting RPC fetch',{ limit });
   const rpcResult=await sb.rpc('get_public_leaderboard',{ p_limit: limit });
+  logApp('Leaderboard','RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
   if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
   if(!isMissingRpcError(rpcResult.error)){
     return { data:null, error:rpcResult.error };
@@ -634,11 +636,14 @@ async function fetchLeaderboardRows(limit=50){
     .select('id, username, reddium_balance, total_bets, wins, losses, rank')
     .order('rank',{ascending:true})
     .limit(limit);
+  logApp('Leaderboard','Direct view fetch completed',{ error: directResult.error?.message || null, rows: directResult.data?.length ?? null });
   return { data:directResult.data, error:directResult.error };
 }
 
 async function fetchPublicBetsFeed(limit=100){
+  logApp('Public bets','Starting RPC fetch',{ limit });
   const rpcResult=await sb.rpc('get_public_bets_feed',{ p_limit: limit });
+  logApp('Public bets','RPC fetch completed',{ error: rpcResult.error?.message || null, rows: rpcResult.data?.length ?? null });
   if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
   if(!isMissingRpcError(rpcResult.error)){
     return { data:null, error:rpcResult.error };
@@ -649,6 +654,7 @@ async function fetchPublicBetsFeed(limit=100){
     .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
     .order('created_at',{ascending:false})
     .limit(limit);
+  logApp('Public bets','Direct table fetch completed',{ error: directResult.error?.message || null, rows: directResult.data?.length ?? null });
   return { data:directResult.data, error:directResult.error };
 }
 
