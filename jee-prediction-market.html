@@ -636,6 +636,36 @@ async function fetchMyProfile(){
   return { data:directResult.data, error:directResult.error };
 }
 
+async function fetchLeaderboardRows(limit=50){
+  const rpcResult=await sb.rpc('get_public_leaderboard',{ p_limit: limit });
+  if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
+  if(!isMissingRpcError(rpcResult.error)){
+    return { data:null, error:rpcResult.error };
+  }
+  console.warn('[Leaderboard RPC missing] Falling back to direct leaderboard view');
+  const directResult=await sb
+    .from('leaderboard')
+    .select('id, username, reddium_balance, total_bets, wins, losses, rank')
+    .order('rank',{ascending:true})
+    .limit(limit);
+  return { data:directResult.data, error:directResult.error };
+}
+
+async function fetchPublicBetsFeed(limit=100){
+  const rpcResult=await sb.rpc('get_public_bets_feed',{ p_limit: limit });
+  if(!rpcResult.error)return { data:rpcResult.data || [], error:null };
+  if(!isMissingRpcError(rpcResult.error)){
+    return { data:null, error:rpcResult.error };
+  }
+  console.warn('[Public bets RPC missing] Falling back to direct bets select');
+  const directResult=await sb
+    .from('bets')
+    .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
+    .order('created_at',{ascending:false})
+    .limit(limit);
+  return { data:directResult.data, error:directResult.error };
+}
+
 function openAuth(mode){
   authMode=mode;
   switchAuthTab(mode);
@@ -722,7 +752,7 @@ async function doSignOut() {
   if(signOutInFlight)return;
   signOutInFlight=true;
   try{ localStorage.setItem(FORCED_SIGNOUT_KEY,'1'); }catch(_){}
-  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  if (btn) { btn.textContent='...'; btn.disabled = true; }
   try{
     const { error } = await sb.auth.signOut({ scope:'global' });
     if(error){
@@ -835,11 +865,7 @@ async function loadLeaderboard(){
   try{
     let rows=null;
     const { data, error } = await withTimeout(
-      sb
-        .from('leaderboard')
-        .select('id, username, reddium_balance, total_bets, wins, losses, rank')
-        .order('rank',{ascending:true})
-        .limit(50),
+      fetchLeaderboardRows(50),
       'leaderboard view'
     );
 
@@ -932,11 +958,7 @@ async function loadPublicBets(){
 
   try{
     const { data: bets, error } = await withTimeout(
-      sb
-        .from('bets')
-        .select('user_id, market_id, pick, stake, locked_odds, created_at, status')
-        .order('created_at',{ascending:false})
-        .limit(100),
+      fetchPublicBetsFeed(100),
       'public bets'
     );
 
@@ -947,23 +969,6 @@ async function loadPublicBets(){
       return;
     }
 
-    const userIds=[...new Set(bets.map(b=>b.user_id).filter(Boolean))];
-    let profileMap={};
-    if(userIds.length){
-      const { data: profiles, error: profilesError } = await withTimeout(
-        sb
-          .from('profiles')
-          .select('id, username')
-          .in('id', userIds),
-        'public bet profiles'
-      );
-      if(profilesError){
-        console.error('[Public bets] profile lookup failed:', profilesError.message);
-      }else{
-        profileMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p.username]));
-      }
-    }
-
     meta.textContent=`${bets.length} bets`;
 
     if(!bets.length){
@@ -972,7 +977,7 @@ async function loadPublicBets(){
     }
 
     const rows=bets.map(bet=>{
-      const username=profileMap[bet.user_id] || 'Anonymous';
+      const username=bet.username || 'Anonymous';
       const mine=bet.user_id===currentUser?.id;
       const market=MNAMES[bet.market_id] || bet.market_id;
       return `<tr>

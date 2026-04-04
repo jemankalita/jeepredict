@@ -255,6 +255,69 @@ as $$
   where p.id = auth.uid();
 $$;
 
+create or replace function public.get_public_leaderboard(p_limit integer default 50)
+returns table (
+  id uuid,
+  username text,
+  reddium_balance integer,
+  total_bets bigint,
+  wins bigint,
+  losses bigint,
+  rank bigint
+)
+language sql
+security definer
+set search_path = public
+as $$
+  with ranked as (
+    select
+      p.id,
+      p.username,
+      p.reddium_balance,
+      count(b.id) as total_bets,
+      coalesce(sum(case when b.status = 'won' then 1 else 0 end), 0) as wins,
+      coalesce(sum(case when b.status = 'lost' then 1 else 0 end), 0) as losses,
+      row_number() over (order by p.reddium_balance desc, p.created_at asc) as rank
+    from public.profiles p
+    left join public.bets b on b.user_id = p.id
+    group by p.id, p.username, p.reddium_balance, p.created_at
+  )
+  select *
+  from ranked
+  order by rank
+  limit greatest(coalesce(p_limit, 50), 1);
+$$;
+
+create or replace function public.get_public_bets_feed(p_limit integer default 100)
+returns table (
+  user_id uuid,
+  username text,
+  market_id text,
+  pick text,
+  stake integer,
+  locked_odds numeric,
+  created_at timestamptz,
+  status text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    b.user_id,
+    coalesce(p.username, 'Anonymous') as username,
+    b.market_id,
+    b.pick,
+    b.stake,
+    b.locked_odds,
+    b.created_at,
+    b.status
+  from public.bets b
+  left join public.profiles p on p.id = b.user_id
+  order by b.created_at desc
+  limit greatest(coalesce(p_limit, 100), 1);
+$$;
+
 create or replace view public.leaderboard as
 select
   p.id,
@@ -307,6 +370,8 @@ grant select on public.leaderboard to anon, authenticated;
 grant execute on function public.place_bet(uuid, text, text, integer, numeric, numeric) to authenticated;
 grant execute on function public.get_pool_snapshot() to anon, authenticated;
 grant execute on function public.get_my_profile() to authenticated;
+grant execute on function public.get_public_leaderboard(integer) to anon, authenticated;
+grant execute on function public.get_public_bets_feed(integer) to anon, authenticated;
 
 do $$
 begin
