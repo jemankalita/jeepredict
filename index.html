@@ -818,11 +818,10 @@ footer{
           <div class="pill-row">
             <span class="pill hot">2S1</span>
             <span class="pill hot">5S2</span>
-            <span class="pill">4S1</span><span class="pill">7S1</span>
+            <span class="pill">4S1</span>
             <span class="pill">6S2</span><span class="pill">8S2</span>
             <span class="pill">2S2</span><span class="pill">4S2</span>
             <span class="pill">5S1</span><span class="pill">6S1</span>
-            <span class="pill">7S2</span>
           </div>
           <div class="card-meta">Pool starts at 0R — you set the odds</div>
         </div>
@@ -837,7 +836,7 @@ footer{
         <div class="card-eyebrow">Market</div>
         <div class="card-name">Lowest Cutoff Shift</div>
         <div class="card-desc">Which shift will have the lowest cutoff? Usually the most unpredictable market — contrarians love this one.</div>
-        <div class="card-meta">All 11 shifts · Parimutuel</div>
+        <div class="card-meta">9 active shifts · Parimutuel</div>
       </div>
 
       <div class="mkt-card reveal d2" style="--card-color:var(--amber)">
@@ -845,7 +844,7 @@ footer{
         <div class="card-eyebrow">Market</div>
         <div class="card-name">Hardest Shift</div>
         <div class="card-desc">Based on difficulty and crowd consensus — which shift do students think had the hardest paper?</div>
-        <div class="card-meta">All 11 shifts · Live odds</div>
+        <div class="card-meta">9 active shifts · Live odds</div>
       </div>
 
       <div class="mkt-card reveal d1" style="--card-color:var(--cobalt)">
@@ -853,7 +852,7 @@ footer{
         <div class="card-eyebrow">Market</div>
         <div class="card-name">Easiest Shift</div>
         <div class="card-desc">The flip side — where did scoring feel most accessible? Often inversely correlated with hardest, but not always.</div>
-        <div class="card-meta">All 11 shifts · Crowd wisdom</div>
+        <div class="card-meta">9 active shifts · Crowd wisdom</div>
       </div>
 
       <div class="mkt-card reveal d2" style="--card-color:var(--violet)">
@@ -1149,7 +1148,7 @@ if(vid){
 }
 
 // ─── MARQUEE ────────────────────────────────────────────────
-const shifts=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
+const shifts=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','8S2'];
 const mkts=['Highest Cutoff','Lowest Cutoff','Hardest Shift','Easiest Shift','99 Percentile'];
 const rail=document.getElementById('mrail');
 const items=[...shifts.map(s=>`Shift ${s}`),...mkts,...shifts.map(s=>`Shift ${s}`),...mkts]
@@ -1159,8 +1158,8 @@ rail.innerHTML=items+items;
 // ─── MINI BARS ───────────────────────────────────────────────
 const barData=[
   {l:'2S1',p:28,c:'#C9A96E'},{l:'5S2',p:20,c:'#DFC080'},
-  {l:'4S1',p:15,c:'#4A8FD4'},{l:'7S1',p:12,c:'#9F72D8'},
-  {l:'6S2',p:10,c:'#2EBD7E'},{l:'8S2',p:8,c:'#344050'},
+  {l:'4S1',p:15,c:'#4A8FD4'},{l:'6S2',p:12,c:'#2EBD7E'},
+  {l:'8S2',p:10,c:'#344050'},{l:'5S1',p:8,c:'#9F72D8'},
   {l:'…',  p:7,c:'#202D3D'},
 ];
 const mx2=28;

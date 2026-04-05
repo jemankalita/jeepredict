@@ -374,7 +374,7 @@ header{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:ce
       <div class="kpi" style="--accent:var(--em)"><div class="kpi-label">Balance</div><div class="kpi-value" id="kpi-bal">—<span class="unit">R</span></div><div class="kpi-sub">Reddium available</div><div class="kpi-accent"></div></div>
       <div class="kpi" style="--accent:var(--gold)"><div class="kpi-label">Total Pool</div><div class="kpi-value" id="kpi-pool">0<span class="unit">R</span></div><div class="kpi-sub">across all markets</div><div class="kpi-accent"></div></div>
       <div class="kpi" style="--accent:var(--cobalt)"><div class="kpi-label">Your Bets</div><div class="kpi-value" id="kpi-bets">0</div><div class="kpi-sub">open positions</div><div class="kpi-accent"></div></div>
-      <div class="kpi" style="--accent:var(--violet)"><div class="kpi-label">Active Markets</div><div class="kpi-value">5</div><div class="kpi-sub">2S1 through 8S2</div><div class="kpi-accent"></div></div>
+      <div class="kpi" style="--accent:var(--violet)"><div class="kpi-label">Active Markets</div><div class="kpi-value">5</div><div class="kpi-sub">9 shifts after cancellations</div><div class="kpi-accent"></div></div>
     </div>
 
     <div class="explainer">
@@ -522,7 +522,7 @@ const CP={red:'1f534',trophy:'1f3c6',down:'1f4c9',skull:'1f480',smile:'1f60c',ch
 const E=(k,cls='e')=>`<img class="${cls}" src="${CDN}${CP[k]}.png" alt="${k}">`;
 const R=E('red');
 
-const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','7S1','7S2','8S2'];
+const SHIFTS=['2S1','2S2','4S1','4S2','5S1','5S2','6S1','6S2','8S2'];
 const APP_VERSION='20260405h';
 const PAGE_QUERY = new URLSearchParams(window.location.search).get('tab');
 const PAGE_MODE = window.location.pathname.toLowerCase().endsWith('leaderboard.html')
@@ -539,10 +539,10 @@ const MKTS=[
 ];
 const MNAMES={highest:`${E('trophy')} Highest Cutoff`,lowest:`${E('down')} Lowest Cutoff`,hardest:`${E('skull')} Hardest Shift`,easiest:`${E('smile')} Easiest Shift`,c99:`${E('chart')} Avg Score`};
 const DEFAULT_POOL_ROWS=[
-  ['highest','2S1',2100],['highest','2S2',2400],['highest','4S1',3000],['highest','4S2',3400],['highest','5S1',5200],['highest','5S2',4700],['highest','6S1',2600],['highest','6S2',2100],['highest','7S1',3300],['highest','7S2',2800],['highest','8S2',1800],
-  ['lowest','2S1',1800],['lowest','2S2',2200],['lowest','4S1',1600],['lowest','4S2',2100],['lowest','5S1',1700],['lowest','5S2',2300],['lowest','6S1',4200],['lowest','6S2',5100],['lowest','7S1',3600],['lowest','7S2',3200],['lowest','8S2',5700],
-  ['hardest','2S1',2400],['hardest','2S2',2200],['hardest','4S1',3100],['hardest','4S2',3600],['hardest','5S1',4300],['hardest','5S2',4600],['hardest','6S1',3900],['hardest','6S2',2600],['hardest','7S1',1900],['hardest','7S2',1600],['hardest','8S2',1200],
-  ['easiest','2S1',1500],['easiest','2S2',1700],['easiest','4S1',1400],['easiest','4S2',1800],['easiest','5S1',1200],['easiest','5S2',1300],['easiest','6S1',2300],['easiest','6S2',3500],['easiest','7S1',4600],['easiest','7S2',5200],['easiest','8S2',6100],
+  ['highest','2S1',2100],['highest','2S2',2400],['highest','4S1',3000],['highest','4S2',3400],['highest','5S1',5200],['highest','5S2',4700],['highest','6S1',2600],['highest','6S2',2100],['highest','8S2',1800],
+  ['lowest','2S1',1800],['lowest','2S2',2200],['lowest','4S1',1600],['lowest','4S2',2100],['lowest','5S1',1700],['lowest','5S2',2300],['lowest','6S1',4200],['lowest','6S2',5100],['lowest','8S2',5700],
+  ['hardest','2S1',2400],['hardest','2S2',2200],['hardest','4S1',3100],['hardest','4S2',3600],['hardest','5S1',4300],['hardest','5S2',4600],['hardest','6S1',3900],['hardest','6S2',2600],['hardest','8S2',1200],
+  ['easiest','2S1',1500],['easiest','2S2',1700],['easiest','4S1',1400],['easiest','4S2',1800],['easiest','5S1',1200],['easiest','5S2',1300],['easiest','6S1',2300],['easiest','6S2',3500],['easiest','8S2',6100],
   ['c99','150-155',900],['c99','155-160',1300],['c99','160-165',2100],['c99','165-170',3400],['c99','170-175',5200],['c99','175-180',6900],['c99','180-185',6100],['c99','185-190',4300],['c99','190-195',2500],['c99','195-200',1200]
 ];
 
